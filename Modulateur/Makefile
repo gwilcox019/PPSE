@@ -1,12 +1,11 @@
 CC=gcc
-# grace's version (mac)
-CFLAGS=-Wall -std=c99 -I/opt/homebrew/opt/gsl/include -L/opt/homebrew/opt/gsl/lib -lgsl -lgslcblas
-# jetson version
-#CFLAGS=-Wall -std=c99 -I/usr/include/gsl -lgsl -lgslcblas -lm
+CFLAGS=-Wall -std=c99 -O3 -march=native
+LDFLAGS= -I/usr/include/gsl -lgsl -lgslcblas -lm
 
-all: simulator
+all: simulator.x
 
-$@.x: $@.c
+simulator.x: simulator.c
+	$(CC) $(CFLAGS) simulator.c -o simulator.x $(LDFLAGS)
 
 clean:
 	rm *.x

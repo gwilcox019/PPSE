@@ -106,7 +106,10 @@ void channel_AGWN_add_noise(const int32_t* X_N, float* Y_N, size_t n, float sigm
 }
 
 void modem_BPSK_demodulate (const float* Y_N, float* L_N, size_t n, float sigma){
-        memcpy (L_N, Y_N, n*sizeof(float));
+        float constant = 2.0f/(sigma*sigma);
+	for (int i=0; i<n; i++) {
+		L_N[i] = Y_N[i] * constant; 
+	}
 }
 
 // transform to fixed point
@@ -115,7 +118,9 @@ void quantizer_transform8 (const float* L_N, int8_t* L8_N, size_t N, size_t s, s
     int8_t frange = pow(2,f);
     for (int i = 0; i<N; i++) {
         L8_N[i] = MIN(MAX(round(frange*L_N[i]),-range),range-1);
+//	printf("%f -> %i\n",L_N[i],L8_N[i]);
     }
+   // sleep(10);
 }
 
 void codec_repetition_hard_decode8(const int8_t *L8_N, uint8_t *V_K, size_t K, size_t n_reps) {
@@ -140,12 +145,15 @@ int8_t sat_int_add(int8_t a, int8_t b) {
 }
 
 void codec_repetition_soft_decode8(const int8_t *L8_N, uint8_t *V_K, size_t K, size_t n_reps) {
-    int16_t avg;
+    int avg;
+//    printf("appel à soft8\n");
     for (int i=0; i<K; i++) {
         avg = 0;
         for (int j=0; j<n_reps; j++) {
-            if (avg != 0x7FFF && avg != 0x8000) //Once overflow is reached, we cannot undo it
-                avg += L8_N[j*K+i];
+            if (avg != 0x7FFF && avg != 0x8000) { //Once overflow is reached, we cannot undo it
+                avg += ((int)(L8_N[j*K+i]));
+	       
+	    }
         }
         if (avg < 0) V_K[i] = 1;
         else V_K[i] = 0;
@@ -156,13 +164,19 @@ void codec_repetition_hard_decode (const float* L_N, uint8_t* V_N, size_t k, siz
     // Reduce float to corresponding int (-1 ; 1)
     // Then average out the hard decisions by summing them
     int average = 0;
+    int tie =0;
     for (int i=0; i<k; i++) {
         average = 0;
 	    for (int j= 0; j<n_reps; j++) {
             average += (L_N[i+j*k] < 0 ? -1  : 1) ;
         }
         // Map hard decision to decoded message
-        V_N[i] = (average<0?1:0);
+	if (average < 0) V_N[i] = 1;
+	else if (average > 0) V_N[i] = 0;
+	else {
+		V_N[i] = tie;
+		tie = 1 - tie;
+	}
     }
 }
 
