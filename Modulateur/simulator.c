@@ -184,14 +184,14 @@ void codec_repetition_soft_decode (const float* L_N, uint8_t *V_N, size_t k, siz
 void codec_repetition_hard_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t K, size_t n_reps) {
     // truc intermédiaire pour charger la valeur
     int array_nb = K/16;
-
+    //print_array8(L8_N, K*n_reps);
     int8x16_t decomposed; //Stores the raw data that we are working on
     int8x16_t sum; //Stores the local sum for that part of the array
     int8x16_t only1 = vdupq_n_s8(1);
     for (int a=0; a<array_nb; a++) { //Pour chaque groupe de 16 valeurs (taille de K)
         for (int r=0; r<n_reps; r++) { //Pour chacune des répétitions
             //Préparation de la partie a
-            decomposed = vld1q_s8(L8_N + (r*n_reps + a));
+            decomposed = vld1q_s8(L8_N + (r*K + a*16));
             decomposed = (int8x16_t)vcltzq_s8(decomposed); //below 0 -> -1 / above 0 -> 0
             decomposed = vaddq_s8 (decomposed, decomposed); //On récupère des 0 (above 0) et des -2 (below 0)
             decomposed = vaddq_s8 (decomposed, only1); //On récupère -1 si on avait moins de 0 et +1 si on avait plus de 0
@@ -206,14 +206,11 @@ void codec_repetition_hard_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t
 
         //Stockage du résultat
         vst1q_s8((int8_t*)V_K+(a*16), sum);
-    }    
+    }   
 }
 
 void codec_repetition_soft_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t K, size_t n_reps) {
-    printf("SIMD soft decode starting : ");
-    print_array8(L8_N, K*n_reps);
-    printf("\n");
-    // K = message size, always multiple of 16
+   // K = message size, always multiple of 16
     int k16 = K/16; // number of 16-wide chunks in message
     int cw; // number of 16-wide chunks already treated
     int8x16_t l8; // temp vector for loading array
@@ -223,26 +220,17 @@ void codec_repetition_soft_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t
     for (int n=0; n<n_reps; n++) {
         cw = n*16*k16;
         for (int i=0; i<k16; i++) {
-            l8 = vld1q_s8(L8_N + cw + i*16); // load next 16 ints from L8_N
-            printf("value loaded : ");
-            display_int8x16(l8);
-            printf("\n");
-            avg[i] = vqaddq_s8(l8, avg[i]); // cumulative avg
+           l8 = vld1q_s8(L8_N + cw + i*16); // load next 16 ints from L8_N
+           avg[i] = vqaddq_s8(l8, avg[i]); // cumulative avg
         }
-    }
-    printf("avg calculated : ");
-    for (int i=0; i<k16; i++) display_int8x16(avg[i]);
-    printf("\n");
-    
+    } 
     int8x16_t one = vdupq_n_s8(1);
     for (int i=0; i<k16; i++) {
-        avg[i] = vandq_s8((uint8x16_t *)vcltzq_s8(avg[i]), one); // check avg < 0, use bit mask bc true result = 0xFFFF_FFFF
+	int8x16_t tmp = (int8x16_t)vcltzq_s8(avg[i]);
+        avg[i] = vandq_s8(tmp, one); // check avg < 0, use bit mask bc true result = 0xFFFF_FFFF
         vst1q_s8((int8_t*)V_K+i*16, avg[i]); // save result
     }
-    printf("SIMD soft decode result : ");
-    print_array(V_K, K);
-    printf("\n");
-}
+}  
 
 void monitor_check_errors (const uint8_t* U_K, const uint8_t *V_K, size_t k, uint64_t *n_bit_errors, uint64_t *n_frame_errors) {
     int flag = 0;
@@ -259,7 +247,7 @@ void monitor_check_errors (const uint8_t* U_K, const uint8_t *V_K, size_t k, uin
 
 
 
-int main1( int argc, char** argv) {
+int main( int argc, char** argv) {
     
     // simulation parameters
     float min_SNR = 0;
@@ -561,7 +549,7 @@ int main1( int argc, char** argv) {
     gsl_rng_free (rangen);
     return 0;
 }
-
+/*
 int main() {
 
     //Init random
@@ -615,16 +603,14 @@ int main() {
         codec_repetition_hard_decode8_neon(L8N, VN, K, REPS);
         printf("\n");
 
-        printf("Tableau soft dec NORMAL: \n");
-        codec_repetition_soft_decode(LN, VN, K, REPS);
+        printf("Tableau hard dec NORMAL: \n");
+        codec_repetition_hard_decode(LN, VN, K, REPS);
+	print_array(VN, K);
         printf("\n");
 
-        // printf("Tableau soft dec w SIMD: \n");
-        // codec_repetition_soft_decode8_neon(L8N, VN, K, REPS);
-        // printf("\n");
-
-        printf("Tableau soft dec no SIMD: \n");
-        codec_repetition_soft_decode8(L8N, VN, K, REPS);
+        printf("Tableau hard dec fixed: \n");
+        codec_repetition_hard_decode8(L8N, VN, K, REPS);
+	print_array8(VN, K);
         printf("\n");
 
     }
@@ -632,3 +618,4 @@ int main() {
     gsl_rng_free(rangen);
     return 0;
 }
+*/
