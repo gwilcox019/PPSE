@@ -114,11 +114,14 @@ void modem_BPSK_demodulate (const float* Y_N, float* L_N, size_t n, float sigma)
 
 // transform to fixed point
 void quantizer_transform8 (const float* L_N, int8_t* L8_N, size_t N, size_t s, size_t f) {
-    int range = pow(2,s-1);
-    int frange = pow(2,f);
+    float range = pow(2,s-1);
+    float frange = pow(2,f);
     for (int i = 0; i<N; i++) {
-        L8_N[i] = MIN(MAX(round(frange*L_N[i]),-range),range-1);
-//	printf("%f -> %i\n",L_N[i],L8_N[i]);
+	float tmp = MIN(MAX(round(frange*L_N[i]),-range+1),range-1);
+	L8_N[i] = (int) tmp;
+	if (L8_N[i] == 0 && L_N[i] < 0) L8_N[i] = -1;
+	else if (L8_N[i] == 0 && L_N[i] > 0) L8_N[i] = 1;
+if (L8_N[i] < 0 && L_N[i] > 0) printf("womp"); else if (L8_N[i] > 0 && L_N[i] < 0) printf("sadge");
     }
    // sleep(10);
 }
@@ -128,16 +131,16 @@ void codec_repetition_hard_decode8(const int8_t *L8_N, uint8_t *V_K, size_t K, s
     int tie = 0;
     for (int i=0; i<K; i++) {
         average = 0;
-	    for (int j= 0; j<n_reps; j++) { 
+	    for (int j= 0; j<n_reps; j++) {  
             average += (L8_N[i+j*K] < 0 ? -1  : 1);
         }
         if (average < 0) V_K[i] = 1;
         else if (average > 0) V_K[i] = 0;
         else {           
-            V_N[i] = tie;
+            V_K[i] = tie;
             tie = 1 - tie;
         }
-        V_K[i] = (average<0?1:0);
+        //V_K[i] = (average<0?1:0);
     }
 }
 
