@@ -170,9 +170,12 @@ int main( int argc, char** argv) {
             case 'f': sprintf(filepath, "sim_%i.csv", atoi(optarg)); sprintf(filepath_stats, "sim_%i_stats.csv", atoi(optarg)); break;
             case 'z': //Check long
                 generate_fn = source_generate_all_zeros;
+		printf("whanged source\n");
                 break;
             case 'o': //check long
-                modulate_fn = modem_BPSK_modulate_all_ones; break;
+                modulate_fn = modem_BPSK_modulate_all_ones; 
+		printf("changed modulate\n");
+		break;
         }
     }
 
@@ -202,9 +205,9 @@ int main( int argc, char** argv) {
     else file = fopen(filepath, "w");
     FILE* file_stats;
     if (filepath[0] == 0) file_stats = stdout;
-    else file_stats = fopen(filepath, "w");
+    else file_stats = fopen(filepath_stats, "w");
     fprintf(file, "Eb/No,Es/No,Sigma,# Bit Errors,# Frame Errors,# Simulated frames,BER,FER,Time for this SNR,Average time for one frame, SNR throughput\n");
-    fprintf(file_stats, "gen_avg,gen_min,gen_max,gen_thr,gen_percent,encode_avg,encode_min,encode_max,encode_thr,encode_percent,bpsk_avg,bpsk_min,bpsk_max,bpsk_thr,bpsk_percent,awgn_avg,awgn_min,awgn_max,awgn_thr,awgn_percent,demodulate_avg,demodulate_min_demodulate_max,demodulate_thr,demodulate_percent,decode_avg,decode_min,decode_max,decode_thr,decode_percent,monitor_avg,monitor_min,monitor_max,monitor_thr,monitor_percent");
+    fprintf(file_stats, "gen_avg,gen_min,gen_max,gen_thr,gen_percent,encode_avg,encode_min,encode_max,encode_thr,encode_percent,bpsk_avg,bpsk_min,bpsk_max,bpsk_thr,bpsk_percent,awgn_avg,awgn_min,awgn_max,awgn_thr,awgn_percent,demodulate_avg,demodulate_min_demodulate_max,demodulate_thr,demodulate_percent,decode_avg,decode_min,decode_max,decode_thr,decode_percent,monitor_avg,monitor_min,monitor_max,monitor_thr,monitor_percent\n");
     // Time computation
     clock_t start_time, end_time; // total SNR sim time
     clock_t begin_step, end_step; // block times
@@ -219,6 +222,7 @@ int main( int argc, char** argv) {
     float max_time[7] = {-1};
     float avg_time[7] = {0};
     float avg_thr[7] = {0};
+    int cycles = 0;
     #endif
     
     //Init random
@@ -249,12 +253,13 @@ int main( int argc, char** argv) {
         do {
             // SOURCE GEN - create frame
             #ifdef ENABLE_STATS
-             begin_step = clock();
+             begin_step = nanos();
             #endif
             generate_fn(U_K, info_bits);
             #ifdef ENABLE_STATS
-            end_step = clock(); 
+            end_step = nanos(); 
             avg_time[0] += (end_step-begin_step);
+	    
             min_time[0]  = ((min_time[0] == -1 || (end_step-begin_step) < min_time[0]) ? (end_step-begin_step) : min_time[0]);
             max_time[0]  = ((max_time[0] == -1 || (end_step-begin_step) > max_time[0]) ? (end_step-begin_step) : max_time[0]);
             total_time_func += (end_step-begin_step);
@@ -358,7 +363,7 @@ int main( int argc, char** argv) {
             avg_thr[i] = (float) block_bits[i]/avg_time[i] / 1e6;
         }
 
-        fprintf(file_stats,"%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f",
+        fprintf(file_stats,"%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",
             avg_time[0], min_time[0], max_time[0], avg_thr[0], avg_time[0]/(total_time_func/n_frame_simulated) * 100,
             avg_time[1], min_time[1], max_time[1], avg_thr[1], avg_time[1]/(total_time_func/n_frame_simulated) * 100,
             avg_time[2], min_time[2], max_time[2], avg_thr[2], avg_time[2]/(total_time_func/n_frame_simulated) * 100,
@@ -366,7 +371,7 @@ int main( int argc, char** argv) {
             avg_time[4], min_time[4], max_time[4], avg_thr[4], avg_time[4]/(total_time_func/n_frame_simulated) * 100,
             avg_time[5], min_time[5], max_time[5], avg_thr[5], avg_time[5]/(total_time_func/n_frame_simulated) * 100,
             avg_time[6], min_time[6], max_time[6], avg_thr[6], avg_time[6]/(total_time_func/n_frame_simulated) * 100 );
-
+	fflush(file_stats);
         #endif
 
         // Writing in file
@@ -374,6 +379,7 @@ int main( int argc, char** argv) {
             val, SNR_better, sigma,
             n_bit_errors, n_frame_errors, n_frame_simulated,
             ber, fer, elapsed, average, sim_thr);
+	fflush(file);
     }
     gsl_rng_free (rangen);
     return 0;
