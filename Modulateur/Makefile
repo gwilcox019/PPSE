@@ -1,14 +1,14 @@
 CC=gcc
-CFLAGS=-Wall -std=c99 -O3 -march=native -I/opt/homebrew/opt/gsl/include
+CFLAGS=-Wall -std=c99 -O3 -march=native -I/opt/homebrew/opt/gsl/include -DENABLE_STATS
 # mac version
 LDFLAGS=-L/opt/homebrew/opt/gsl/lib 
 LDLIBS=-lgsl -lgslcblas -lm
 # jetson version
 #LDLIBS= -I/usr/include/gsl -lgsl -lgslcblas -lm
 
-all: simulator.x
+all: simulator
 
-simulator.x: simulator.o debug_func.o generate.o encoder.o modulate.o decode.o monitor.o
+simulator: simulator.o debug_func.o generate.o encoder.o modulate.o decode.o monitor.o
 
 simulator.o: simulator.c debug_func.h generate.h encoder.h modulate.h decode.h monitor.h
 

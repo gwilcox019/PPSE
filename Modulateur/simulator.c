@@ -150,10 +150,11 @@ int main( int argc, char** argv) {
     float avg_time[7] = {0};
     float avg_thr[7] = {0};
     float cycles = 0;
-    clock_t begin_step, end_step; // block times
-    float total_time_func = 0; // total time for 1 SNR sim NOT including calculations
+    clock_t begin_step, end_step; // block time    
     #endif
     
+    float total_time_func = 0; // total time for 1 SNR sim NOT including calculations
+			       //
     //Init random - for generation and normal law
     srand(time(NULL));   // Initialization, should only be called once.
     const gsl_rng_type * rangentype;
@@ -319,7 +320,7 @@ int main( int argc, char** argv) {
         #endif
 
         // Writing in file
-        fprintf(file, "%f, %f, %f, %llu, %llu, %llu, %f, %f, %f, %f, %f\n", 
+        fprintf(file, "%f, %f, %f, %lu, %lu, %lu, %f, %f, %f, %f, %f\n", 
             val, SNR_better, sigma,
             n_bit_errors, n_frame_errors, n_frame_simulated,
             ber, fer, elapsed, average, sim_thr);
