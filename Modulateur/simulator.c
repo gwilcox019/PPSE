@@ -130,7 +130,7 @@ void *routine(void *param)
 #ifdef ENABLE_STATS
         begin_step = clock();
 #endif
-        encoder_repetition_encode(U_K, C_N, info_bits, n_reps);
+        encoder_fn(U_K, C_N, info_bits, n_reps);
 #ifdef ENABLE_STATS
         end_step = clock();
         cycles = ((end_step - begin_step) * 1000000) / CLOCKS_PER_SEC;
