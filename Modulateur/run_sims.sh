@@ -13,11 +13,8 @@
 #     exit 1
 # fi
 
-# Hard
-./simulator -m 0 -M 14 -s 1 -e 100 -K 32 -N 8192 -D "rep-hard" -f "hard" &
-./simulator -m 0 -M 14 -s 1 -e 100 -K 32 -N 8192 -D "rep-hard8" -f "hard8" --qf 5 --qs 7 &
-./simulator -m 0 -M 14 -s 1 -e 100 -K 32 -N 8192 -D "rep-hard8-neon" -f "hard_neon" --qf 5 --qs 7 &
-
-./simulator -m 0 -M 11 -s 1 -e 100 --src-all-zeros --mod-all-ones -K 32 -N 8192 -D "rep-soft" -f "soft" &
-./simulator -m 0 -M 11 -s 1 -e 100 --src-all-zeros --mod-all-ones -K 32 -N 8192 -D "rep-soft8" -f "soft8" --qf 3 --qs 5 &
-./simulator -m 0 -M 11 -s 1 -e 100 --src-all-zeros --mod-all-ones -K 32 -N 8192 -D "rep-soft8-neon" -f "soft_neon" --qf 3 --qs 5 & 
+~/Documents/PPSE/Modulateur/simulator -m 0 -M 14 -s 1 -e 100 -K 256 -N 1024 -D "rep-hard" -t -f "hard" 
+~/Documents/PPSE/Modulateur/simulator -m 0 -M 11 -s 1 -e 100 -K 256 -N 1024 -D "rep-soft" -t -f "soft_128"  
+~/Documents/PPSE/Modulateur/simulator -m 0 -M 11 -s 1 -e 100 -K 256 -N 768  -D "rep-soft" -t -f "soft_96"  
+~/Documents/PPSE/Modulateur/simulator -m 0 -M 11 -s 1 -e 100 -K 256 -N 512  -D "rep-soft" -t -f "soft_64"  
+~/Documents/PPSE/Modulateur/simulator -m 0 -M 11 -s 1 -e 100 -K 256 -N 256  -D "rep-soft" -t -f "soft_32"  
