@@ -203,9 +203,9 @@ void* routine(void* param) {
                 max_time[6] = ((cycles > max_time[6]) ? cycles : max_time[6]);
                 total_time_func += cycles;
     #endif
-                pthread_muted_lock(&frame_mutex);
+                pthread_mutex_lock(&frame_mutex);
                 n_frame_simulated++;
-                pthread_muted_unlock(&frame_mutex);
+                pthread_mutex_unlock(&frame_mutex);
             } while (n_frame_errors < f_max);
 	return NULL;
 }
