@@ -52,10 +52,12 @@ float ber, fer;                                           // Stats - computed af
     float average = 0;            // average time per frame for 1 SNR sim
     float sim_thr;                // throughput for 1 SNR sim (Mbps)
 
+    // For random noise
+
+    const gsl_rng_type *rangentype;
+    gsl_rng *rangen;
 // Per-block statistics
 #ifdef ENABLE_STATS
-    // blocks used :          source gen, encode,        modulate,      channel,       demodulate,    decode,    monitor
-    uint32_t block_bits[7] = {info_bits, codeword_size, codeword_size, codeword_size, codeword_size, info_bits, info_bits}; // number of bits for each block
     float min_time[7] = {-1};
     float max_time[7] = {-1};
     float avg_time[7] = {0};
@@ -203,6 +205,7 @@ void* routine(void* param) {
     
                 n_frame_simulated++;
             } while (n_frame_errors < f_max);
+	return NULL;
 }
 
 int main(int argc, char **argv)
@@ -361,6 +364,9 @@ int main(int argc, char **argv)
     else
         file_stats = fopen(filepath_stats, "w");
     fprintf(file_stats, "Eb/No,gen_avg,gen_min,gen_max,gen_thr,gen_percent,encode_avg,encode_min,encode_max,encode_thr,encode_percent,bpsk_avg,bpsk_min,bpsk_max,bpsk_thr,bpsk_percent,awgn_avg,awgn_min,awgn_max,awgn_thr,awgn_percent,demodulate_avg,demodulate_min,demodulate_max,demodulate_thr,demodulate_percent,decode_avg,decode_min,decode_max,decode_thr,decode_percent,monitor_avg,monitor_min,monitor_max,monitor_thr,monitor_percent\n");
+
+        // blocks used :          source gen, encode,        modulate,      channel,       demodulate,    decode,    monitor
+    uint32_t block_bits[7] = {info_bits, codeword_size, codeword_size, codeword_size, codeword_size, info_bits, info_bits}; // number of bits for each block
     #endif
     
     //Init constants given out inputs
@@ -369,10 +375,9 @@ int main(int argc, char **argv)
 
 
     // Init random - for generation and normal law
-    srand(time(NULL)); // Initialization, should only be called once.
-    const gsl_rng_type *rangentype;
+    srand(time(NULL)); // Initialization, should only be called once.    
     rangentype = gsl_rng_default;
-    gsl_rng *rangen = gsl_rng_alloc(rangentype); // random number gen w uniform distr
+    rangen = gsl_rng_alloc(rangentype); // random number gen w uniform distr
 
     // Start loop
     for (float val = min_SNR; val <= max_SNR; val += step_val)
@@ -411,11 +416,11 @@ int main(int argc, char **argv)
         }
         routine(NULL);
         if (threads) {
-            pthread_join(&t0, NULL);
-            pthread_join(&t1, NULL);
-            pthread_join(&t2, NULL);
-            pthread_join(&t3, NULL);
-            pthread_join(&t4, NULL);
+            pthread_join(t0, NULL);
+            pthread_join(t1, NULL);
+            pthread_join(t2, NULL);
+            pthread_join(t3, NULL);
+            pthread_join(t4, NULL);
         }
 
         //End stats
@@ -458,7 +463,7 @@ int main(int argc, char **argv)
         fflush(file);
     }
     gsl_rng_free(rangen);
-    pthread_mutex_destroy(&fer);
-    pthread_mutex_destroy(&ber);
+    pthread_mutex_destroy(&fer_mutex);
+    pthread_mutex_destroy(&ber_mutex);
     return 0;
 }
