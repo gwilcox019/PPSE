@@ -45,7 +45,7 @@ int f = 3;
 int s = 7;
 
 // Parameters for bit packing
-char use_packing = 0;
+char use_packing = 0; 
 
 // Computation values
 uint64_t n_bit_errors, n_frame_errors, n_frame_simulated; // Frame and bit stats
@@ -275,7 +275,7 @@ int main(int argc, char **argv)
     // The following argument is then stored in optarg variable
     int opt;
     // Loops while something to read
-    while ((opt = getopt_long(argc, argv, "m:M:s:e:K:N:D:f:o:c:t:p", zero_opt, &long_index)) != -1)
+    while ((opt = getopt_long(argc, argv, "m:M:s:e:K:N:D:f:o:c:tp", zero_opt, &long_index)) != -1)
     {
         switch (opt)
         {
