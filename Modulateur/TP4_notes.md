@@ -89,7 +89,7 @@ We run all the possible combinations of f and s for each sim, then we trace the 
 We begin by changing the command line parser to adapt to those new neon options.  
 Then we implement the hard and soft decoder :
 
-**Hard decoder**
+### Hard decoder
 K is a multiple of 16, so we will do K/16 iterations of this treatment.  
 
 We iterate on each part of the array (`array_nb = K/16`), and on each repetition of this part of the array (`n_reps`), we do :
@@ -100,18 +100,24 @@ We iterate on each part of the array (`array_nb = K/16`), and on each repetition
 - Once the sum is done, we have the results of the majority vote. We once again do a `vcltzq_s8` to determine if the sum was below 0 (meaning we should infer a 1) or above 0 (meaning we should infer a 0).
 - `vcltzq_s8` returns -1 when we should infer a 1 - we just have to do a "and" between this -1 (0b11111111) and a 1 (0b00000001) to get a 1 back. The 0s are not affected.
 
-When doing the simulation with the Neon version, the fixed-point version, the original version as well as the randomized original version (comparison point), we see that all are approximately the same results. 
+When doing the simulation with the Neon version, the fixed-point version, and the original version, we see that all are approximately the same results.
+![performances hard](Task6/perf_hard.jpg)
 
 When comparing the throughputs, we see that floating point has the best throughput of the 3. We assume it is because it takes more time to transform floats into fixed-point, which causes to reduce the throughput.  
 When comparing between fixed-point and neon, we find that vectorial instructions do have a better throughput, which is what we expected.
+Note: Because of the Y-axis values taking so much space, the Y axis legend seems to be out of frame. It is in fact "Throughput (Mbps)".
+![throughput hard](Task6/throughput_hard.jpg)
 
-We also compared the execution times ; we could see that the time it took to simulate one frame was way less for the SIMD decoder compared to the scalar ones.
+We also compared the execution times for the decoder block ; (we could see that the time it took to simulate one frame was way less for the SIMD decoder compared to the scalar ones.)
+**Insert graph for comparison for 1 block**
 
-**Ajouter 4 graphes**
-- le throughput
-- la vitesse globale de traitement d'une frame
-- **La vitesse spécifiquement pour le décodage - besoin d'ajouter les stats
-- les performances de décodage
+### Soft decoder
+**:::warning
+TODO GRACE
+:::**
+
+![performances soft](Task6/perf_soft.jpg)
+![throughput soft](Task6/throughput_soft.jpg)
 
 **Soft decoder**
 **GRACE TODO**
