@@ -51,7 +51,7 @@ void source_generate(uint8_t* UK, size_t k) {
 // alternative generator with all zero
 void source_generate_all_zeros(uint8_t *U_K, size_t K) {
     for (; K>0; K--)
-        U_K[K-1] = 0 ; 
+        U_K[K-1] = 1 ; 
 }
 
 // encodes frame of k bits by repeating it
