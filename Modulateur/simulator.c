@@ -74,7 +74,7 @@ void source_generate(uint8_t* UK, size_t k) {
 // alternative generator with all zero
 void source_generate_all_zeros(uint8_t *U_K, size_t K) {
     for (; K>0; K--)
-        U_K[K-1] = 1 ; 
+        U_K[K-1] = 0 ; 
 }
 
 // encodes frame of k bits by repeating it
@@ -93,7 +93,7 @@ void module_bpsk_modulate (const uint8_t* CN, int32_t* XN, size_t n) {
 
 void modem_BPSK_modulate_all_ones(const uint8_t *C_N, int32_t *X_N, size_t N) {
     for (; N>0; N--)
-        X_N[N-1] = 0;
+        X_N[N-1] = 1;
 }
 
 // adds random noise following a normal distribution
@@ -123,7 +123,10 @@ void codec_repetition_hard_decode8(const int8_t *L8_N, uint8_t *V_K, size_t K, s
     for (int i=0; i<K; i++) {
         average = 0;
 	    for (int j= 0; j<n_reps; j++) {
-            average += (L8_N[i+j*K] < 0 ? -1  : 1) ;
+            int hard_decision = (L8_N[i+j*K] < 0 ? -1  : 1);
+            if (!(average == 0b01111111 && hard_decision ==1)
+            && !(average == 0b10000000 && hard_decision == -1)) //Prevents overflow
+                average += hard_decision;
         }
         V_K[i] = (average<0?1:0);
     }
@@ -138,7 +141,7 @@ int8_t sat_int_add(int8_t a, int8_t b) {
 }
 
 void codec_repetition_soft_decode8(const int8_t *L8_N, uint8_t *V_K, size_t K, size_t n_reps) {
-    int8_t avg;
+    int16_t avg;
     for (int i=0; i<K; i++) {
         avg = 0;
         for (int j=0; j<n_reps; j++) {
@@ -147,9 +150,6 @@ void codec_repetition_soft_decode8(const int8_t *L8_N, uint8_t *V_K, size_t K, s
         if (avg < 0) V_K[i] = 1;
         else V_K[i] = 0;
     }
-    printf("soft decode result w fixed point: ");
-    print_array(V_K, K);
-    printf("\n");
 }
 
 void codec_repetition_hard_decode (const float* L_N, uint8_t* V_N, size_t k, size_t n_reps) {
@@ -176,9 +176,6 @@ void codec_repetition_soft_decode (const float* L_N, uint8_t *V_N, size_t k, siz
         if (avg < 0) V_N[i] = 1;
         else V_N[i] = 0;
     }
-    printf("soft decode result NORMAL: ");
-    print_array(V_N, k);
-    printf("\n");
 }
 
 void codec_repetition_hard_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t K, size_t n_reps) {
@@ -415,8 +412,8 @@ int main( int argc, char** argv) {
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
             avg_time[0] += cycles;
 	    
-            min_time[0]  = ((min_time[0] == -1 || cycles < min_time[0]) ? cycles : min_time[0]);
-            max_time[0]  = ((max_time[0] == -1 || cycles > max_time[0]) ? cycles : max_time[0]);
+            min_time[0]  = ((cycles < min_time[0]) ? cycles : min_time[0]);
+            max_time[0]  = ((cycles > max_time[0]) ? cycles : max_time[0]);
 	             
             total_time_func += cycles;
             #endif
@@ -430,8 +427,8 @@ int main( int argc, char** argv) {
             end_step = clock(); 
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
             avg_time[1] += cycles;
-            min_time[1]  = ((min_time[1] == -1 || cycles < min_time[1]) ? cycles : min_time[1]);
-            max_time[1]  = ((max_time[1] == -1 || cycles > max_time[1]) ? cycles : max_time[1]);
+            min_time[1]  = ((cycles < min_time[1]) ? cycles : min_time[1]);
+            max_time[1]  = ((cycles > max_time[1]) ? cycles : max_time[1]);
             total_time_func += cycles;
             #endif
 
@@ -444,8 +441,8 @@ int main( int argc, char** argv) {
             end_step = clock(); 
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
             avg_time[2] += cycles;
-            min_time[2]  = ((min_time[2] == -1 || cycles < min_time[0]) ? cycles : min_time[0]);
-            max_time[2]  = ((max_time[2] == -1 || cycles > max_time[0]) ? cycles : max_time[0]);
+            min_time[2]  = ((cycles < min_time[2]) ? cycles : min_time[2]);
+            max_time[2]  = ((cycles > max_time[2]) ? cycles : max_time[2]);
             total_time_func += cycles;
             #endif
             
@@ -458,8 +455,8 @@ int main( int argc, char** argv) {
             end_step = clock(); 
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
             avg_time[3] += cycles;
-            min_time[3]  = ((min_time[3] == -1 || cycles < min_time[0]) ? cycles : min_time[0]);
-            max_time[3]  = ((max_time[3] == -1 || cycles > max_time[0]) ? cycles : max_time[0]);
+            min_time[3]  = ((cycles < min_time[3]) ? cycles : min_time[0]);
+            max_time[3]  = ((cycles > max_time[3]) ? cycles : max_time[0]);
             total_time_func += cycles;
             #endif
 
@@ -472,8 +469,8 @@ int main( int argc, char** argv) {
             end_step = clock(); 
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
             avg_time[4] += cycles;
-            min_time[4]  = ((min_time[4] == -1 || cycles < min_time[0]) ? cycles : min_time[0]);
-            max_time[4]  = ((max_time[4] == -1 || cycles > max_time[0]) ? cycles : max_time[0]);
+            min_time[4]  = ((cycles < min_time[4]) ? cycles : min_time[0]);
+            max_time[4]  = ((cycles > max_time[4]) ? cycles : max_time[0]);
             total_time_func += cycles;
             #endif
 
@@ -489,8 +486,8 @@ int main( int argc, char** argv) {
             end_step = clock(); 
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
             avg_time[5] += cycles;
-            min_time[5]  = ((min_time[5] == -1 || cycles < min_time[0]) ? cycles : min_time[0]);
-            max_time[5]  = ((max_time[5] == -1 || cycles > max_time[0]) ? cycles : max_time[0]);
+            min_time[5]  = ((cycles < min_time[5]) ? cycles : min_time[0]);
+            max_time[5]  = ((cycles > max_time[5]) ? cycles : max_time[0]);
             total_time_func += cycles;
             #endif
 
@@ -503,8 +500,8 @@ int main( int argc, char** argv) {
             end_step = clock(); 
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
             avg_time[6] += cycles;
-            min_time[6]  = ((min_time[6] == -1 || cycles < min_time[0]) ? cycles : min_time[0]);
-            max_time[6]  = ((max_time[6] == -1 || cycles > max_time[0]) ? cycles : max_time[0]);
+            min_time[6]  = ((cycles < min_time[6]) ? cycles : min_time[6]);
+            max_time[6]  = ((cycles > max_time[6]) ? cycles : max_time[6]);
             total_time_func += cycles;
             #endif
 
