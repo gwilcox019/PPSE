@@ -47,8 +47,7 @@ float step_val = 1;
 uint32_t f_max = 100;
 uint32_t info_bits = 32;
 uint32_t codeword_size = 128;
-int K = info_bits;
-int N = codeword_size;
+int K, N;
 
 // Parameters for fixed-point functions
 char use_fixed = 0;
@@ -57,8 +56,6 @@ int s = 7;
 
 // Parameters for bit packing
 char use_packing = 0;
-uint32_t pack_info_bits = info_bits/8;
-uint32_t pack_codeword_size = codeword_size/8; 
 
 // Computation values
 uint64_t n_bit_errors, n_frame_errors, n_frame_simulated; // Frame and bit stats
@@ -127,9 +124,9 @@ void *routine(void *param)
         begin_step = clock();
 #endif
         generate_fn(U_K, K);
-        printf("array gen : ");
-        print_array(U_K, K);
-        printf("\n");
+//        printf("array gen : ");
+//        print_array(U_K, K);
+//        printf("\n");
 #ifdef ENABLE_STATS
         end_step = clock();
         cycles = ((end_step - begin_step) * 1000000) / CLOCKS_PER_SEC;
@@ -235,9 +232,9 @@ void *routine(void *param)
 #endif
         if (use_packing) {
             bit_packer(V_K, P_K, K);
-            printf("array recovered : ");
-            print_array(P_K, K);
-            printf("\n");
+ //           printf("array recovered : ");
+ //           print_array(P_K, K);
+ //           printf("\n");
         }
 
 // MONITOR - error check
@@ -417,8 +414,8 @@ int main(int argc, char **argv)
     }
 
     if (use_packing) {
-        K = pack_info_bits;
-        N = pack_codeword_size;
+        K = info_bits/8;
+        N = codeword_size/8;
     } else {
         K = info_bits;
         N = codeword_size;
