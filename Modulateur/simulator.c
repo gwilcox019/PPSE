@@ -127,10 +127,8 @@ void codec_repetition_hard_decode8(const int8_t *L8_N, uint8_t *V_K, size_t K, s
     int average = 0;
     for (int i=0; i<K; i++) {
         average = 0;
-	    for (int j= 0; j<n_reps; j++) {
-            int hard_decision = (L8_N[i+j*K] < 0 ? -1  : 1);
-            if (average != 0b01111111 && average != 0b10000000) //Once overflow is reached, we cannot undo it
-                average += hard_decision;
+	for (int j= 0; j<n_reps; j++) { 
+            average += (L8_N[i+j*K] < 0 ? -1  : 1);
         }
         V_K[i] = (average<0?1:0);
     }
