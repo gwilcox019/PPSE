@@ -43,9 +43,9 @@ We then compared the time spent for simulating one frame, as well as the through
 ![throughput](thread_throughput.jpg)
 
 
-# Axe 2 - Optimize one blockwith SIMD
+# Axe 2 - Optimize one block
 
-## Optimize modulator
+## Optimize modulator with SIMD
 In order to optimize the modulator block, the original code is adapted to be used with neon SIMD functions. As a reminder, our modulator uses binary phase key shifting (BPSK) to transform a binary message to a symbol which is then converted to an integer value for transmission.
 ```
 binary | symbol | integer
@@ -87,7 +87,7 @@ There is no difference in the error rates when using the neon and scalar modulat
 ![alt text](mod_time.jpg)
 The neon modulator is nearly 5x faster than its scalar counterpart.
 
-## Optimize demodulator
+## Optimize demodulator with SIMD
 Similar to the modulator, a new version of the demodulator is proposed using vectorized instructions. The demodulator serves to normalize the noisy values coming out of the channel so that they sit in a similar range in that case that they need to be converted to fixed point. This is achieved by multiplying each element by 2/sigma^2, where the noise is proportionnal to sigma.
 
 The input and output of the demodulator are both floating point arrays because this step comes _before_ the values are decoded back to binary. Thus, in order to retain the noise value for an accurate decode, floating point vectors are used for the normalization calculation. 
@@ -117,7 +117,7 @@ The vectorized version is slightly faster than the scalar demodulator, except fo
 
 In terms of said offset, the gain in time with the neon instructions is significantly less than observed with modulator. This is not all that surprising, however, since the demodulator uses float vectors, which only hold 4 elements at a time, compared to the integer vectors used in the modulator (for the data manipulation part) that hold 16 elements. As such, the demodulator only treats 4 elements at a time, and though there is still a reduction in loop iterations, this reduction is much less significant than that of the modulator. Finally, the demodulator itself only consists of load, multiply, and store *floating point* operations, which are naturally more costly, especially in terms of arithmetic. This may contribute to the lack of gain with the neon instructions because floating point is used instead of previously seen integer-based vectors.
 
-## Optimize monitor
+## Optimize monitor with SIMD
 We want to speed up the monitor block, by treating 16 elements at a time. We will use SIMD for that.
 
 We begin by computing the number of computations we'll have to do based on the array length (K, multiple of 16).  
@@ -147,7 +147,7 @@ The time taken for the monitor is (most of the time) also reduced, as we can see
 ![monitor_perfs](monitor_upgrade.jpg)
 
 ## Bit-packing
-Given that the simulation chain uses 1-bit data (other than in working with the noise of the channel), it is unnecessary to use a full byte for each piece of data. In order to reduce both time and memory usage, the generator, encoder, and modulator are all modified to support bit-packing, where data is treated 1 bit at a time - even though it is still stored in bytes (uint8_t). We note that all three of these implementations use scalar (not SIMD) functions.
+Given that the simulation chain uses 1-bit data (other than when working with the noise of the channel), it is unnecessary to use a full byte for each piece of data. In order to reduce both time and memory usage, the generator, encoder, and modulator are all modified to support bit-packing, where data is treated 1 bit at a time - even though it is still stored in bytes (uint8_t). We note that all three of these new implementations use scalar (not SIMD) functions.
 
 *Generator*
 A new bit-packing version of the random number generator is added that does not use parity to reduce the value generated to 1 or 0. Already this is much more efficient, utilising all 8 bits of each array element, and reducing the computional load of the function significantly by omitting the modulo calculation. Additionally, this function only needs to produce 8 times less random numbers to provide the same amount of data as the original. This is not explicit in the function, but instead is evident in its usage in `simulator.c`.
