@@ -70,7 +70,7 @@ void module_bpsk_modulate (const uint8_t* CN, int32_t* XN, size_t n) {
 
 void modem_BPSK_modulate_all_ones(const uint8_t *C_N, int32_t *X_N, size_t N) {
     for (; N>0; N--)
-        X_N[N-1] = 1;
+        X_N[N-1] = 0;
 }
 
 // adds random noise following a normal distribution
