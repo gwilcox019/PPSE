@@ -98,10 +98,10 @@ void codec_repetition_hard_decode (const float* L_N, uint8_t* V_N, size_t k, siz
     for (int i=0; i<k; i++) {
         average = 0;
 	    for (int j= 0; j<n_reps; j++) {
-            average += (L_N[i+j*k] >= 0 ? 1 : -1) ;
+            average += (L_N[i+j*k] < 0 ? -1  : 1) ;
         }
         // Map hard decision to decoded message
-        V_N[i] = (average>=0?0:1);
+        V_N[i] = (average<0?1:0);
     }
 }
 
@@ -144,8 +144,8 @@ int main( int argc, char** argv) {
     void  (*decoder_fn) (const float*, uint8_t *, size_t, size_t) = codec_repetition_soft_decode;
     void (*generate_fn) (uint8_t*, size_t) = source_generate;
     void (*modulate_fn) (const uint8_t*, int32_t*, size_t) = module_bpsk_modulate;
-    char filepath[11] = {0};
-    char filepath_stats[17] = {0};
+    char filepath[20] = {0};
+    char filepath_stats[30] = {0};
     // For long option - we set an alias
     struct option zero_opt[3] = {{"src-all-zeros", no_argument, NULL, 'z'}, {"mod-all-ones", no_argument, NULL, 'o'},{0,0,0,0}};
     int long_index=0;
@@ -169,7 +169,7 @@ int main( int argc, char** argv) {
             case 'D':
                 if (strcmp(optarg, "rep-hard") == 0) decoder_fn = codec_repetition_hard_decode;
                 break;
-            case 'f': sprintf(filepath, "sim_%i.csv", atoi(optarg)); sprintf(filepath_stats, "sim_%i_stats.csv", atoi(optarg)); break;
+            case 'f': sprintf(filepath, "sim_%s.csv", optarg); sprintf(filepath_stats, "sim_%s_stats.csv",optarg); break;
             case 'z': //Check long
                 generate_fn = source_generate_all_zeros;
                 break;
