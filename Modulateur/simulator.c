@@ -50,7 +50,8 @@ void source_generate(uint8_t* UK, size_t k) {
 
 // alternative generator with all zero
 void source_generate_all_zeros(uint8_t *U_K, size_t K) {
-    memset(U_K, 0, K*sizeof(uint8_t));
+    for (; K>0; K--)
+        U_K[K-1] = 0 ; 
 }
 
 // encodes frame of k bits by repeating it
@@ -68,7 +69,8 @@ void module_bpsk_modulate (const uint8_t* CN, int32_t* XN, size_t n) {
 }
 
 void modem_BPSK_modulate_all_ones(const uint8_t *C_N, int32_t *X_N, size_t N) {
-    memset(X_N, 1, N*sizeof(int32_t));
+    for (; N>0; N--)
+        X_N[N-1] = 1;
 }
 
 // adds random noise following a normal distribution
@@ -102,11 +104,6 @@ void codec_repetition_hard_decode (const float* L_N, uint8_t* V_N, size_t k, siz
         V_N[i] = (average>=0?0:1);
     }
 }
-
-// 12 elems dans tableau, k = 4, reps = 3
-// Elements à additionner : 0-4-8-12 / 1-5-9-13 / 2-6-10-14 / 3-7-11-15
-// on parcourt k
-//
 
 void codec_repetition_soft_decode (const float* L_N, uint8_t *V_N, size_t k, size_t n_reps) {
     float avg;
@@ -175,7 +172,6 @@ int main( int argc, char** argv) {
             case 'f': sprintf(filepath, "sim_%i.csv", atoi(optarg)); sprintf(filepath_stats, "sim_%i_stats.csv", atoi(optarg)); break;
             case 'z': //Check long
                 generate_fn = source_generate_all_zeros;
-		printf("whanged source\n");
                 break;
             case 'o': //check long
                 modulate_fn = modem_BPSK_modulate_all_ones; 
@@ -209,7 +205,7 @@ int main( int argc, char** argv) {
     if (filepath[0] == 0) file = stdout;
     else file = fopen(filepath, "w");
     FILE* file_stats;
-    if (filepath[0] == 0) file_stats = stdout;
+    if (filepath_stats[0] == 0) file_stats = stdout;
     else file_stats = fopen(filepath_stats, "w");
     fprintf(file, "Eb/No,Es/No,Sigma,# Bit Errors,# Frame Errors,# Simulated frames,BER,FER,Time for this SNR,Average time for one frame, SNR throughput\n");
     fprintf(file_stats, "gen_avg,gen_min,gen_max,gen_thr,gen_percent,encode_avg,encode_min,encode_max,encode_thr,encode_percent,bpsk_avg,bpsk_min,bpsk_max,bpsk_thr,bpsk_percent,awgn_avg,awgn_min,awgn_max,awgn_thr,awgn_percent,demodulate_avg,demodulate_min_demodulate_max,demodulate_thr,demodulate_percent,decode_avg,decode_min,decode_max,decode_thr,decode_percent,monitor_avg,monitor_min,monitor_max,monitor_thr,monitor_percent\n");
@@ -244,9 +240,11 @@ int main( int argc, char** argv) {
         total_time_func = 0;
         
         #ifdef ENABLE_STATS
-        memset(min_time, -1, 7*sizeof(float));
-        memset(max_time, -1, 7*sizeof(float));
-        memset(avg_time, 0, 7*sizeof(float));
+	for (int i=0; i<7; i++) {
+		min_time[i] = INFINITY;
+		max_time[i] = -INFINITY;
+		avg_time[i] = 0;
+	}
         #endif
 
         SNR_better = val + 10*log10f(R); // have to use log10 not just log
@@ -261,13 +259,14 @@ int main( int argc, char** argv) {
              begin_step = clock();
             #endif
             generate_fn(U_K, info_bits);
-            #ifdef ENABLE_STATS
+	    #ifdef ENABLE_STATS
             end_step = clock(); 
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
             avg_time[0] += cycles;
 	    
             min_time[0]  = ((min_time[0] == -1 || cycles < min_time[0]) ? cycles : min_time[0]);
             max_time[0]  = ((max_time[0] == -1 || cycles > max_time[0]) ? cycles : max_time[0]);
+	             
             total_time_func += cycles;
             #endif
 
@@ -304,7 +303,7 @@ int main( int argc, char** argv) {
              begin_step = clock();
             #endif
             channel_AGWN_add_noise(X_N, Y_N, codeword_size, sigma, rangen);
-            #ifdef ENABLE_STATS
+ 	    #ifdef ENABLE_STATS
             end_step = clock(); 
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
             avg_time[3] += cycles;
@@ -359,7 +358,7 @@ int main( int argc, char** argv) {
         } while (n_frame_errors < f_max);
 
         end_time = clock();
-        elapsed = (float) (end_time - start_time) / (CLOCKS_PER_SEC*1000000); // microseconds
+        elapsed = (float) (end_time - start_time)*1000000 / CLOCKS_PER_SEC; // microseconds
         average = elapsed / n_frame_simulated;
 
         fer = (float)n_frame_errors/n_frame_simulated;
