@@ -492,7 +492,7 @@ int main(int argc, char **argv)
 #endif
 
         // Writing in file
-        fprintf(file, "%f, %f, %f, %lu, %lu, %lu, %f, %f, %f, %f, %f\n",
+        fprintf(file, "%f, %f, %f, %lu, %lu, %lu, %f, %f, %ld, %f, %f\n",
                 val, SNR_better, sigma,
                 n_bit_errors, n_frame_errors, n_frame_simulated,
                 ber, fer, elapsed, average, sim_thr);

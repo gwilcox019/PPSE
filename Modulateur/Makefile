@@ -1,8 +1,8 @@
 CC=gcc
-CFLAGS=-Wall -std=c99 -O3 -march=native -I/opt/homebrew/opt/gsl/include -DENABLE_STATS
+CFLAGS=-Wall -std=gnu99 -O3 -march=native -I/opt/homebrew/opt/gsl/include -DENABLE_STATS
 # mac version
 LDFLAGS=-L/opt/homebrew/opt/gsl/lib -DENABLE_STATS
-LDLIBS=-lgsl -lgslcblas -lm -lpthread
+LDLIBS=-lgsl -lgslcblas -lm -lpthread -lrt
 # jetson version
 #LDLIBS= -I/usr/include/gsl -lgsl -lgslcblas -lm
 

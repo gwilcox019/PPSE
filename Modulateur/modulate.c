@@ -11,7 +11,7 @@ void module_bpsk_modulate_bit_unpack (const uint8_t* CN, int32_t* XN, size_t n) 
         N = 8*n;
         for (int i=0; i<8; i++) { // for each bit of this element of CN
             XN[N-1-i] = ((CN[n] & 0x01) ? -1:1); // check LSB of CN
-            CN[n] = CN[n] >> 1; // logic shift right 1 bit
+            //CN[n] = CN[n] >> 1; // logic shift right 1 bit
         }
     } 
 }
