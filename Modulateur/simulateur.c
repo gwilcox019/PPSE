@@ -7,6 +7,7 @@
 #define K 4
 #define REPS 3
 
+// print functions for arrays of different types
 void print_array (uint8_t* array, size_t size) {
     printf("[");
     for (int i=0; i<size; i++) {
@@ -31,12 +32,9 @@ void source_generate(uint8_t* UK, size_t k) {
 
 // encodes frame of k bits by repeating it
 // read from the buffer U_K, write into C_N
-void encoder_repetition_encode(const uint8_t* UK, uint8_t* CN, size_t repetitions) {
-    for (int r=0; r<repetitions; r++) {
-        for (int k=0; k<sizeof(UK); k++) {
-            CN[r+k] = UK[k];
-        }
-    }
+void encoder_repetition_encode(const uint8_t* UK, uint8_t* CN, size_t k, size_t repetitions) {
+    for (int n=0; n<k*repetitions; n++) 
+        CN[n] = UK[n%k] ;
 }
 
 // modulates encoded codeword where 0 -> 1, 1 -> -1
@@ -49,25 +47,25 @@ void module_bpsk_modulate (const uint8_t* CN, int32_t* XN, size_t N) {
 
 
 int main() {
-    uint8_t UK[K];
-    int32_t xn_tmp[K];
+
     int N = K*REPS;
+    uint8_t UK[K];
     uint8_t CN[N];
     int32_t XN[N];
     //Init random
     srand(time(NULL));   // Initialization, should only be called once.
 
-    
+    // test
     for (int i=0; i<20; i++) {
         source_generate(UK, K);
-        printf("\nTableau généré : ");
+        printf("\nTableau genere : ");
         print_array(UK, K);
-        encoder_repetition_encode(UK,CN,REPS);
-        printf("\nTableau encodé : ");
+        encoder_repetition_encode(UK,CN,K,REPS);
+        printf("\nTableau encode : ");
         print_array(CN,N);
-        printf("\nTableau modulé : ");
-        module_bpsk_modulate(UK, xn_tmp, K);
-        print_array_32(xn_tmp, K);
+        module_bpsk_modulate(CN, XN, N);
+        printf("\nTableau module : ");
+        print_array_32(XN, N);
         printf("\n__________\n");
     }
 
