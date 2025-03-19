@@ -60,14 +60,23 @@ void demodulate (float* YN, float* LN, size_t N) {
 }
 
 void decode_hard (float* LN, uint8_t* UO, size_t N, size_t K) {
-    uint8_t hard_decision[N];
+    int8_t hard_decision[N];
+    // Reduce float to corresponding int (-1 ; 1)
     for (; N>0; N--) {
-        hard_decision[N-1] = (LN[N-1] >= 0 ? 0 : 1);
+        hard_decision[N-1] = (LN[N-1] >= 0 ? 1 : -1);
     }
-    uint8_t average[K];
+
+    // Average out the hard decisions by summing them
+    int8_t average[K] = {0};
+    int nb_reps = N/K;
     for (int i=0; i<K; K++) {
-	average[i];
+	for (int j= 0; j<nb_reps; j++) average[i] += hard_decision[i + j*K] ;
     }
+
+    // Map hard decision to decoded message
+    for (int i = 0; i<K; i++) 
+	UO[i] = (average[K]>=0?0:1);
+
 }
 
 void decode_soft () 
