@@ -44,7 +44,33 @@ void module_bpsk_modulate (const uint8_t* CN, int32_t* XN, size_t N) {
         XN[N-1] = (CN[N-1]?-1:1);
 }
 
+void agwn(const int32_t* XN, float* YN, size_t N)) {
+	// passer de EB/N0 à ES/N0 -> need coderate
+	// Calculer sigma à partir de là
+	// Générer un N de la loi normale pour l'ajouter au X et on a le Y
+	//
+    for (; N>0; N--) {
+	float n = 0;
+	YN[N] = XN[N] + n;
+    }
+}
 
+void demodulate (float* YN, float* LN, size_t N) {
+        memcpy (LN, YN, N*sizeof(float));
+}
+
+void decode_hard (float* LN, uint8_t* UO, size_t N, size_t K) {
+    uint8_t hard_decision[N];
+    for (; N>0; N--) {
+        hard_decision[N-1] = (LN[N-1] >= 0 ? 0 : 1);
+    }
+    uint8_t average[K];
+    for (int i=0; i<K; K++) {
+	average[i];
+    }
+}
+
+void decode_soft () 
 
 int main() {
 
