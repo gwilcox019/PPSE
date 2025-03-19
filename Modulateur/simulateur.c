@@ -55,11 +55,12 @@ void agwn(const int32_t* XN, float* YN, size_t N)) {
     }
 }
 
-void demodulate (float* YN, float* LN, size_t N) {
-        memcpy (LN, YN, N*sizeof(float));
+void modem_BPSK_demodulate (const float* Y_N, float* L_N, size_t N, float sigma){
+        memcpy (LN, YN, N*n_reps*sizeof(float));
 }
 
-void decode_hard (float* LN, uint8_t* UO, size_t N, size_t K) {
+void codec_repetition_hard_decode (const float* L_N, uint8_t* V_N, size_t K, size_t n_reps) {
+    int8_t N = K*n_reps;
     int8_t hard_decision[N];
     // Reduce float to corresponding int (-1 ; 1)
     for (; N>0; N--) {
@@ -67,10 +68,9 @@ void decode_hard (float* LN, uint8_t* UO, size_t N, size_t K) {
     }
 
     // Average out the hard decisions by summing them
-    int8_t average[K] = {0};
-    int nb_reps = N/K;
+    int8_t average[K] = {0}; 
     for (int i=0; i<K; K++) {
-	for (int j= 0; j<nb_reps; j++) average[i] += hard_decision[i + j*K] ;
+	for (int j= 0; j<n_reps; j++) average[i] += hard_decision[i + j*K] ;
     }
 
     // Map hard decision to decoded message
@@ -79,7 +79,21 @@ void decode_hard (float* LN, uint8_t* UO, size_t N, size_t K) {
 
 }
 
-void decode_soft () 
+void codec_repetition_soft_decode (const float* L_N, uint8_t *V_N, size_t K, size_t n_reps) {
+
+}
+
+void monitor_check_errors (const uint8_t* U_K, const uint8_t *V_K, size_t K, uint64_t) *n_bit_errors, uint64_t *n_frame_errors) {
+    int flag = 0;
+    for (; K>0; K--) {
+	if (U_K[K] != V_K[K]) {
+	    if (!flag) { *n_frame_errors++; flag++ };
+	    n_bit_errors++;
+	}
+
+    }
+
+}
 
 int main() {
 
@@ -89,6 +103,7 @@ int main() {
     int32_t XN[N];
     //Init random
     srand(time(NULL));   // Initialization, should only be called once.
+
 
     // test
     for (int i=0; i<20; i++) {
