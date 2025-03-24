@@ -7,6 +7,10 @@
 #include <unistd.h>
 #include <math.h>
 #include <gsl/gsl_rng.h>
+#include <gsl/gsl_randist.h>
+
+#define K 4
+#define REPS 3
 
 // print functions for arrays of different types
 void print_array (uint8_t* array, size_t size) {
@@ -33,7 +37,7 @@ void print_array_float (float* array, size_t size) {
 }
 
 // generates random frame of k bits
-// write into the buffer U_K
+//write into the buffer U_K
 void source_generate(uint8_t* UK, size_t k) {
     for (; k>0; k--)
         UK[k-1] = rand()%2 ;      // Returns a pseudo-random integer between 0 and RAND_MAX.
@@ -54,12 +58,15 @@ void module_bpsk_modulate (const uint8_t* CN, int32_t* XN, size_t n) {
 }
 
 // adds random noise following a normal distribution
-gsl_rng *ran_gen = gsl_rng_alloc(gsl_rng_taus); // random number gen w uniform distr
 void channel_AGWN_add_noise(const int32_t* X_N, float* Y_N, size_t n, float sigma) {
+    const gsl_rng_type * rangentype;
+    rangentype = gsl_rng_default;
+    gsl_rng * rangen = gsl_rng_alloc (rangentype); // random number gen w uniform distr 
     for (; n>0; n--) {
-	    float v = gsl_ran_gaussian(ran_gen, sigma); // calculates normal value with sigma from uniform random number
-	    Y_N[n] = X_N[n] + v;
+        float v = gsl_ran_gaussian(rangen, sigma); // calculates normal value with sigma from uniform random number
+        Y_N[n-1] = X_N[n-1] + v;
     }
+    gsl_rng_free (rangen);
 }
 
 void modem_BPSK_demodulate (const float* Y_N, float* L_N, size_t n, float sigma){
