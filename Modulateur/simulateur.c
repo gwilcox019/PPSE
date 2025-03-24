@@ -6,11 +6,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 
-#define K 4
-#define REPS 3
 
 // print functions for arrays of different types
 void print_array (uint8_t* array, size_t size) {
@@ -76,7 +77,7 @@ void modem_BPSK_demodulate (const float* Y_N, float* L_N, size_t n, float sigma)
 void codec_repetition_hard_decode (const float* L_N, uint8_t* V_N, size_t k, size_t n_reps) {
     // Reduce float to corresponding int (-1 ; 1)
     // Then average out the hard decisions by summing them
-    int8_t average[K] = {0}; 
+    int8_t average[k];
     for (int i=0; i<k; k++) {
 	    for (int j= 0; j<n_reps; j++) {
             average[i] += (L_N[i+j*k] >= 0 ? 1 : -1) ;
@@ -95,8 +96,11 @@ void monitor_check_errors (const uint8_t* U_K, const uint8_t *V_K, size_t k, uin
     int flag = 0;
     for (; k>0; k--) {
         if (U_K[k] != V_K[k]) {
-            if (!flag) { *n_frame_errors++; flag++; }
-            n_bit_errors++;
+            if (!flag) { 
+                *n_frame_errors = *n_frame_errors+1; 
+                flag++; 
+            }
+            *n_bit_errors = *n_bit_errors+1;
         }
     }
 }
@@ -112,7 +116,7 @@ int main( int argc, char** argv) {
     uint32_t info_bits = 32;
     uint32_t codeword_size = 128;
     void (*decoder_fn) (const float*, uint8_t *, size_t, size_t) = codec_repetition_soft_decode; 
-    char filepath[6] = {0};
+    char filepath[11] = {0};
 
     // We use getopt to parse command line arguments
     // An option is a parameter beginning with '-' (different from "-" and "--")
@@ -123,7 +127,7 @@ int main( int argc, char** argv) {
     // The following argument is then stored in optarg variable
     int opt;
     //Loops while something to read
-    while ((opt = getopt(argc, argv, "m:M:s:e:K:N:D:s:")) != -1) {
+    while ((opt = getopt(argc, argv, "m:M:s:e:K:N:D:f:")) != -1) {
         switch(opt) {
             case 'm': min_SNR = atof(optarg); break;
             case 'M': if ((max_SNR = atof(optarg)) == 0) max_SNR = 12; break;
@@ -134,33 +138,33 @@ int main( int argc, char** argv) {
             case 'D':
                 if (strcmp(optarg, "rep-hard") == 0) decoder_fn = codec_repetition_hard_decode;
                 break;
-            case 's': sprintf(filepath, "sim_%i.csv", atoi(optarg));
+            case 'f': sprintf(filepath, "sim_%i.csv", atoi(optarg)); break;
                 
         }
     }
 
     // Arrays & simulation parameters
-    uint8_t UK[info_bits]; // Source message
-    uint8_t CN[codeword_size]; // Repetition coded message
-    int32_t XN[codeword_size]; // Modulated message
+    uint8_t U_K[info_bits]; // Source message
+    uint8_t C_N[codeword_size]; // Repetition coded message
+    int32_t X_N[codeword_size]; // Modulated message
     float Y_N[codeword_size];  // Received message after canal
     float L_N[codeword_size];  // Demodulated message
-    uint8_t V_N[info_bits];// Decoded message
+    uint8_t V_K[info_bits];// Decoded message
 
     uint64_t n_bit_errors, n_frame_errors, n_frame_simulated; // Frame and bit stats
     float sigma; // Variance
     float SNR_better; // Es/N0 instead of Eb/N0
-    float R = K/N; // Ratio
-    uint32_t n_reps = N/K; //Number of repetitions
+    float R = info_bits/codeword_size; // Ratio
+    uint32_t n_reps = codeword_size/info_bits; //Number of repetitions
 
     // Stats - computed after one loop
     float ber, fer;
 
     // Output file
-    int fd;
-    if (filepath[0] == 0) fd = stdout;
-    else fd = open(filepath, O_WRONLY | O_CREAT | O_TRUNC);
-    dprintf(fd, "# Bit Errors, # Frame Errors, # Simulated frames, BER, FER, Time for this SNR, Average time for one frame\n");
+    FILE* file;
+    if (filepath[0] == 0) file = stdout;
+    else file = fopen(filepath, "w");
+    fprintf(file, "# Bit Errors, # Frame Errors, # Simulated frames, BER, FER, Time for this SNR, Average time for one frame\n");
 
     // Time computation
     clock_t start_time, end_time;
@@ -177,17 +181,16 @@ int main( int argc, char** argv) {
         n_frame_simulated = 0;
 
         SNR_better = val + 10*log(R*1);
-        sigma = sqrt( 1 / (2 * pow(10, (SNR_better/10) ) ) )
+        sigma = sqrt( 1 / (2 * pow(10, (SNR_better/10) ) ) );
 
         do {
-            start_frame = clock()
-            source_generate(UK, K);
-            encoder_repetition_encode(UK,CN,K,REPS);
-            module_bpsk_modulate(CN, XN, N);
+            source_generate(U_K, info_bits);
+            encoder_repetition_encode(U_K,C_N,info_bits,n_reps);
+            module_bpsk_modulate(C_N, X_N, codeword_size);
             // ADD AWGN HERE
-            modem_BPSK_demodulate(Y_N, L_N, N, sigma);
-            decoder_fn ( L_N, V_N, K, n_reps);
-            monitor_check_errors(U_K, V_K, K, &n_bit_errors, &n_frame_errors);
+            modem_BPSK_demodulate(Y_N, L_N, codeword_size, sigma);
+            decoder_fn ( L_N, V_K, info_bits, n_reps);
+            monitor_check_errors(U_K, V_K, info_bits, &n_bit_errors, &n_frame_errors);
             n_frame_simulated++;
         } while (n_frame_errors < f_max);
 
@@ -196,11 +199,11 @@ int main( int argc, char** argv) {
         average = elapsed / n_frame_simulated;
 
         fer = n_frame_errors/n_frame_simulated;
-        ber = n_bit_errors / (n_frame_simulated * K);
+        ber = n_bit_errors / (n_frame_simulated * info_bits);
 
         // Writing in file
-        dprintf(fd, "%i, %i, %i, %f, %f, %f, %f\n", 
-            n_bit_errors, n_frame_errors, n_frames_simulated,
+        fprintf(file, "%li, %li, %li, %f, %f, %f, %f\n", 
+            n_bit_errors, n_frame_errors, n_frame_simulated,
             ber, fer, elapsed, average);
     }
 
