@@ -32,7 +32,7 @@ void print_array_float (float* array, size_t size) {
 }
 
 // generates random frame of k bits
-//write into the buffer U_K
+// write into the buffer U_K
 void source_generate(uint8_t* UK, size_t k) {
     for (; k>0; k--)
         UK[k-1] = rand()%2 ;      // Returns a pseudo-random integer between 0 and RAND_MAX.
@@ -52,14 +52,12 @@ void module_bpsk_modulate (const uint8_t* CN, int32_t* XN, size_t n) {
         XN[n-1] = (CN[n-1]?-1:1);
 }
 
-void agwn(const int32_t* XN, float* YN, size_t n) {
-	// passer de EB/N0 à ES/N0 -> need coderate
-	// Calculer sigma à partir de là
-	// Générer un N de la loi normale pour l'ajouter au X et on a le Y
-	//
+// adds random noise following a normal distribution
+const gsl_rng *ran_gen = gsl_rng_alloc(gsl_rng_taus); // random number gen w uniform distr
+void channel_AGWN_add_noise(const int32_t* X_N, float* Y_N, size_t n, float sigma) {
     for (; n>0; n--) {
-	float v = 0;
-	YN[n] = XN[n] + v;
+	    float v = gsl_ran_gaussian(ran_gen, sigma); // calculates normal value with sigma from uniform random number
+	    Y_N[n] = X_N[n] + v;
     }
 }
 
