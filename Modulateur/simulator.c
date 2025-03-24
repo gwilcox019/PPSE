@@ -9,8 +9,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
+// #include <gsl/gsl_rng.h>
+// #include <gsl/gsl_randist.h>
 #include <getopt.h>
 
 // FOR COMPILING THE MAKE FILE IS STUPID AND DOESNT WORK ??? methinks its smth w order of flags but not even chatgpt could help me figure it out
@@ -64,18 +64,18 @@ void module_bpsk_modulate (const uint8_t* CN, int32_t* XN, size_t n) {
 }
 
 // adds random noise following a normal distribution
-void channel_AGWN_add_noise(const int32_t* X_N, float* Y_N, size_t n, float sigma) {
+// void channel_AGWN_add_noise(const int32_t* X_N, float* Y_N, size_t n, float sigma) {
     
-    const gsl_rng_type * rangentype;
-    rangentype = gsl_rng_default;
-    gsl_rng * rangen = gsl_rng_alloc (rangentype); // random number gen w uniform distr 
+//     const gsl_rng_type * rangentype;
+//     rangentype = gsl_rng_default;
+//     gsl_rng * rangen = gsl_rng_alloc (rangentype); // random number gen w uniform distr 
     
-    for (; n>0; n--) {
-        float v = gsl_ran_gaussian(rangen, sigma); // calculates normal value with sigma from uniform random number
-        Y_N[n-1] = X_N[n-1] + v;
-    }
-    gsl_rng_free (rangen);
-}
+//     for (; n>0; n--) {
+//         float v = gsl_ran_gaussian(rangen, sigma); // calculates normal value with sigma from uniform random number
+//         Y_N[n-1] = X_N[n-1] + v;
+//     }
+//     gsl_rng_free (rangen);
+// }
 
 void modem_BPSK_demodulate (const float* Y_N, float* L_N, size_t n, float sigma){
         memcpy (L_N, Y_N, n*sizeof(float));
@@ -109,8 +109,9 @@ void codec_repetition_soft_decode (const float* L_N, uint8_t *V_N, size_t k, siz
 
 void monitor_check_errors (const uint8_t* U_K, const uint8_t *V_K, size_t k, uint64_t *n_bit_errors, uint64_t *n_frame_errors) {
     int flag = 0;
-    for (; k>0; k--) {
-        if (U_K[k] != V_K[k]) {
+    for (int i=0; i<k; i++) {
+        if (U_K[i] != V_K[i]) {
+            //printf("UK is %i, VK is %i\n", U_K[i], V_K[i]);
             if (!flag) { 
                 *n_frame_errors = *n_frame_errors+1; 
                 flag++; 
@@ -123,6 +124,7 @@ void monitor_check_errors (const uint8_t* U_K, const uint8_t *V_K, size_t k, uin
 
 
 int main( int argc, char** argv) {
+    /*
     // simulation parameters
     float min_SNR = 0;
     float max_SNR = 12;
@@ -221,12 +223,13 @@ int main( int argc, char** argv) {
             n_bit_errors, n_frame_errors, n_frame_simulated,
             ber, fer, elapsed, average);
     }
+            */
 
-    size_t K = 5, N = 10, REPS = 2;
-    uint8_t UK[N], CN[N];
-    int32_t XN[N];
-    float YN[N], LN[N];
-    uint8_t VN[K];
+    // size_t K = 5, N = 10, REPS = 2;
+    // uint8_t UK[N], CN[N];
+    // int32_t XN[N];
+    // float YN[N], LN[N];
+    // uint8_t VN[K];
     
     // for (int i=0; i<20; i++) {
     //     //float sigma=0;
