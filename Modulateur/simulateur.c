@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
+#include <gsl/gsl_rng.h>
 
 // print functions for arrays of different types
 void print_array (uint8_t* array, size_t size) {
@@ -53,7 +54,7 @@ void module_bpsk_modulate (const uint8_t* CN, int32_t* XN, size_t n) {
 }
 
 // adds random noise following a normal distribution
-const gsl_rng *ran_gen = gsl_rng_alloc(gsl_rng_taus); // random number gen w uniform distr
+gsl_rng *ran_gen = gsl_rng_alloc(gsl_rng_taus); // random number gen w uniform distr
 void channel_AGWN_add_noise(const int32_t* X_N, float* Y_N, size_t n, float sigma) {
     for (; n>0; n--) {
 	    float v = gsl_ran_gaussian(ran_gen, sigma); // calculates normal value with sigma from uniform random number
