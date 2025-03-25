@@ -15,7 +15,7 @@
 
 // FOR COMPILING THE MAKE FILE IS STUPID AND DOESNT WORK ??? methinks its smth w order of flags but not even chatgpt could help me figure it out
 // anyways this is the command to use ! 
-// gcc simulateur.c -o simulateur.x -Wall -std=c99 -I/usr/include/gsl -lgsl -lgslcblas -lm
+// gcc simulator.c -o simulator.x -Wall -std=c99 -I/usr/include/gsl -lgsl -lgslcblas -lm
 // (change I flag for where gsl is on the machine)
 
 // print functions for arrays of different types
@@ -89,13 +89,10 @@ void codec_repetition_hard_decode (const float* L_N, uint8_t* V_N, size_t k, siz
         average = 0;
 	    for (int j= 0; j<n_reps; j++) {
             average += (L_N[i+j*k] >= 0 ? 1 : -1) ;
-            printf("adding %i to average\n", (L_N[i+j*k] >= 0 ? 1 : -1));
         }
-        printf("Average is %i\n", average);
         // Map hard decision to decoded message
         V_N[i] = (average>=0?0:1);
     }
-    print_array(V_N, k);
 }
 
 // 12 elems dans tableau, k = 4, reps = 3
@@ -113,14 +110,12 @@ void codec_repetition_soft_decode (const float* L_N, uint8_t *V_N, size_t k, siz
         if (avg < 0) V_N[i] = 1;
         else V_N[i] = 0;
     }
-    print_array(V_N, k);
 }
 
 void monitor_check_errors (const uint8_t* U_K, const uint8_t *V_K, size_t k, uint64_t *n_bit_errors, uint64_t *n_frame_errors) {
     int flag = 0;
     for (int i=0; i<k; i++) {
         if (U_K[i] != V_K[i]) {
-            //printf("UK is %i, VK is %i\n", U_K[i], V_K[i]);
             if (!flag) { 
                 *n_frame_errors = *n_frame_errors+1; 
                 flag++; 
@@ -133,7 +128,7 @@ void monitor_check_errors (const uint8_t* U_K, const uint8_t *V_K, size_t k, uin
 
 
 int main( int argc, char** argv) {
-    /*
+    
     // simulation parameters
     float min_SNR = 0;
     float max_SNR = 12;
@@ -178,9 +173,9 @@ int main( int argc, char** argv) {
     uint8_t V_K[info_bits];// Decoded message
 
     uint64_t n_bit_errors, n_frame_errors, n_frame_simulated; // Frame and bit stats
-    float sigma; // Variance
+    double sigma; // Variance
     float SNR_better; // Es/N0 instead of Eb/N0
-    float R = info_bits/codeword_size; // Ratio
+    float R = (float)info_bits/codeword_size; // Ratio - need to cast to float else rounds to ints
     uint32_t n_reps = codeword_size/info_bits; //Number of repetitions
 
     // Stats - computed after one loop
@@ -206,8 +201,10 @@ int main( int argc, char** argv) {
         n_frame_errors = 0;
         n_frame_simulated = 0;
 
-        SNR_better = val + 10*log(R*1);
-        sigma = sqrt( 1 / (2 * pow(10, (SNR_better/10) ) ) );
+        SNR_better = val + 10*log10f(R); // have to use log10 not just log
+        sigma = sqrt( 1 / (2 * pow(10, (SNR_better/10) ) ) ); 
+
+        printf("min snr = %f, max snr = %f, current snr = %f, sigma = %f\n", min_SNR, max_SNR, val, sigma);
 
         do {
             source_generate(U_K, info_bits);
@@ -232,8 +229,10 @@ int main( int argc, char** argv) {
             n_bit_errors, n_frame_errors, n_frame_simulated,
             ber, fer, elapsed, average);
     }
-            */
+            
 
+    // functional testing
+    /*
     size_t K = 5, N = 10, REPS = 2;
     uint8_t UK[N], CN[N];
     int32_t XN[N];
@@ -278,6 +277,7 @@ int main( int argc, char** argv) {
         codec_repetition_soft_decode(LN, VN, K, REPS);
         printf("\n");
     }
+    */
 
     return 0;
 }
