@@ -64,17 +64,12 @@ void module_bpsk_modulate (const uint8_t* CN, int32_t* XN, size_t n) {
 }
 
 // adds random noise following a normal distribution
-void channel_AGWN_add_noise(const int32_t* X_N, float* Y_N, size_t n, float sigma) {
-    
-    const gsl_rng_type * rangentype;
-    rangentype = gsl_rng_default;
-    gsl_rng * rangen = gsl_rng_alloc (rangentype); // random number gen w uniform distr 
-    
+void channel_AGWN_add_noise(const int32_t* X_N, float* Y_N, size_t n, float sigma, gsl_rng * rangen) {
     for (; n>0; n--) {
         float v = gsl_ran_gaussian(rangen, sigma); // calculates normal value with sigma from uniform random number
         Y_N[n-1] = X_N[n-1] + v;
     }
-    gsl_rng_free (rangen);
+
 }
 
 void modem_BPSK_demodulate (const float* Y_N, float* L_N, size_t n, float sigma){
@@ -194,6 +189,9 @@ int main( int argc, char** argv) {
     
     //Init random
     srand(time(NULL));   // Initialization, should only be called once.
+    const gsl_rng_type * rangentype;
+    rangentype = gsl_rng_default;
+    gsl_rng * rangen = gsl_rng_alloc (rangentype); // random number gen w uniform distr 
 
     for (float val = min_SNR; val <= max_SNR; val+=step_val) {
         start_time = clock();
@@ -208,11 +206,30 @@ int main( int argc, char** argv) {
 
         do {
             source_generate(U_K, info_bits);
+            // printf("source : ");
+            // print_array(U_K, info_bits);
+            // printf("\n");
             encoder_repetition_encode(U_K,C_N,info_bits,n_reps);
+            // printf("encoded : ");
+            // print_array(C_N, codeword_size);
+            // printf("\n");
             module_bpsk_modulate(C_N, X_N, codeword_size);
-            channel_AGWN_add_noise(X_N, Y_N, codeword_size, sigma);
+            // printf("modulated : ");
+            // print_array_32(X_N, codeword_size);
+            // printf("\n");
+            channel_AGWN_add_noise(X_N, Y_N, codeword_size, sigma, rangen);
+            // printf("channel out : ");
+            // print_array_float(Y_N, codeword_size);
+            // printf("\n");
+            //printf("%f\n",Y_N[0]);
             modem_BPSK_demodulate(Y_N, L_N, codeword_size, sigma);
+            // printf("demod : ");
+            // print_array_float(L_N, codeword_size);
+            // printf("\n");
             decoder_fn ( L_N, V_K, info_bits, n_reps);
+            // printf("decoded : ");
+            // print_array(V_K, info_bits);
+            // printf("\n");
             monitor_check_errors(U_K, V_K, info_bits, &n_bit_errors, &n_frame_errors);
             n_frame_simulated++;
         } while (n_frame_errors < f_max);
@@ -221,14 +238,15 @@ int main( int argc, char** argv) {
         elapsed = (float) (end_time - start_time) / CLOCKS_PER_SEC;
         average = elapsed / n_frame_simulated;
 
-        fer = n_frame_errors/n_frame_simulated;
-        ber = n_bit_errors / (n_frame_simulated * info_bits);
+        fer = (float)n_frame_errors/n_frame_simulated;
+        ber = (float)n_bit_errors / (n_frame_simulated * info_bits);
 
         // Writing in file
         fprintf(file, "%f, %f, %f, %li, %li, %li, %f, %f, %f, %f\n", 
             val, SNR_better, sigma,
             n_bit_errors, n_frame_errors, n_frame_simulated,
             ber, fer, elapsed, average);
+
     }
             
 
@@ -279,6 +297,6 @@ int main( int argc, char** argv) {
         printf("\n");
     }
     */
-
+    gsl_rng_free (rangen);
     return 0;
 }
