@@ -9,8 +9,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-// #include <gsl/gsl_rng.h>
-// #include <gsl/gsl_randist.h>
+#include <gsl/gsl_rng.h>
+#include <gsl/gsl_randist.h>
 #include <getopt.h>
 
 // FOR COMPILING THE MAKE FILE IS STUPID AND DOESNT WORK ??? methinks its smth w order of flags but not even chatgpt could help me figure it out
@@ -64,18 +64,18 @@ void module_bpsk_modulate (const uint8_t* CN, int32_t* XN, size_t n) {
 }
 
 // adds random noise following a normal distribution
-// void channel_AGWN_add_noise(const int32_t* X_N, float* Y_N, size_t n, float sigma) {
+void channel_AGWN_add_noise(const int32_t* X_N, float* Y_N, size_t n, float sigma) {
     
-//     const gsl_rng_type * rangentype;
-//     rangentype = gsl_rng_default;
-//     gsl_rng * rangen = gsl_rng_alloc (rangentype); // random number gen w uniform distr 
+    const gsl_rng_type * rangentype;
+    rangentype = gsl_rng_default;
+    gsl_rng * rangen = gsl_rng_alloc (rangentype); // random number gen w uniform distr 
     
-//     for (; n>0; n--) {
-//         float v = gsl_ran_gaussian(rangen, sigma); // calculates normal value with sigma from uniform random number
-//         Y_N[n-1] = X_N[n-1] + v;
-//     }
-//     gsl_rng_free (rangen);
-// }
+    for (; n>0; n--) {
+        float v = gsl_ran_gaussian(rangen, sigma); // calculates normal value with sigma from uniform random number
+        Y_N[n-1] = X_N[n-1] + v;
+    }
+    gsl_rng_free (rangen);
+}
 
 void modem_BPSK_demodulate (const float* Y_N, float* L_N, size_t n, float sigma){
         memcpy (L_N, Y_N, n*sizeof(float));
@@ -104,7 +104,16 @@ void codec_repetition_hard_decode (const float* L_N, uint8_t* V_N, size_t k, siz
 //
 
 void codec_repetition_soft_decode (const float* L_N, uint8_t *V_N, size_t k, size_t n_reps) {
-
+    float avg;
+    for (int i=0; i<k; i++) {
+        avg = 0;
+        for (int j=0; j<n_reps; j++) {
+            avg += L_N[j*k+i];
+        }
+        if (avg < 0) V_N[i] = 1;
+        else V_N[i] = 0;
+    }
+    print_array(V_N, k);
 }
 
 void monitor_check_errors (const uint8_t* U_K, const uint8_t *V_K, size_t k, uint64_t *n_bit_errors, uint64_t *n_frame_errors) {
@@ -225,44 +234,50 @@ int main( int argc, char** argv) {
     }
             */
 
-    // size_t K = 5, N = 10, REPS = 2;
-    // uint8_t UK[N], CN[N];
-    // int32_t XN[N];
-    // float YN[N], LN[N];
-    // uint8_t VN[K];
+    size_t K = 5, N = 10, REPS = 2;
+    uint8_t UK[N], CN[N];
+    int32_t XN[N];
+    float YN[N], LN[N];
+    uint8_t VN[K];
     
-    // for (int i=0; i<20; i++) {
-    //     //float sigma=0;
-    //     // Generate message
-    //     source_generate(UK, K);
-    //     printf("\nTableau genere : ");
-    //     print_array(UK, K);
+    for (int i=0; i<1; i++) {
+        //float sigma=0;
+        // Generate message
+        source_generate(UK, K);
+        printf("\nTableau genere : ");
+        print_array(UK, K);
 
-    //     // Encoded message
-    //     encoder_repetition_encode(UK,CN,K,REPS);
-    //     printf("\nTableau encode : ");
-    //     print_array(CN,N);
+        // Encoded message
+        encoder_repetition_encode(UK,CN,K,REPS);
+        printf("\nTableau encode : ");
+        print_array(CN,N);
 
-    //     // Modulated message
-    //     module_bpsk_modulate(CN, XN, N);
-    //     printf("\nTableau module : ");
-    //     print_array_32(XN, N);
-    //     printf("\n__________\n");
+        // Modulated message
+        module_bpsk_modulate(CN, XN, N);
+        printf("\nTableau module : ");
+        print_array_32(XN, N);
+        printf("\n__________\n");
 
-    //     // Canal message
-    //     channel_AGWN_add_noise(XN, YN, N, 0.1);
-    //     printf("Tableau transmis : \n");
-    //     print_array_float(YN, N);
-    //     printf("\n");
+        // Canal message
+        channel_AGWN_add_noise(XN, YN, N, 0.1);
+        printf("Tableau transmis : \n");
+        print_array_float(YN, N);
+        printf("\n");
 
-    //     // Demodulated message
-    //     modem_BPSK_demodulate(YN, LN, N, 0.1);
-    //     print_array_float(LN, N);
-    //     printf("\n");
+        // Demodulated message
+        modem_BPSK_demodulate(YN, LN, N, 0.1);
+        printf("Tableau demodule : \n");
+        print_array_float(LN, N);
+        printf("\n");
 
-    //     codec_repetition_hard_decode(LN, VN, K, REPS);
-    //     print_array(VN, K);
-    // }
+        printf("Tableau hard dec : \n");
+        codec_repetition_hard_decode(LN, VN, K, REPS);
+        printf("\n");
+
+        printf("Tableau soft dec : \n");
+        codec_repetition_soft_decode(LN, VN, K, REPS);
+        printf("\n");
+    }
 
     return 0;
 }
