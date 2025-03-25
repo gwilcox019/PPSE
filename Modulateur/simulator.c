@@ -13,8 +13,6 @@
 #include <gsl/gsl_randist.h>
 #include <getopt.h>
 
-// FOR COMPILING THE MAKE FILE IS STUPID AND DOESNT WORK ??? methinks its smth w order of flags but not even chatgpt could help me figure it out
-// anyways this is the command to use ! 
 // gcc simulator.c -o simulator.x -Wall -std=c99 -I/usr/include/gsl -lgsl -lgslcblas -lm
 // (change I flag for where gsl is on the machine)
 
