@@ -185,7 +185,7 @@ int main( int argc, char** argv) {
     FILE* file;
     if (filepath[0] == 0) file = stdout;
     else file = fopen(filepath, "w");
-    fprintf(file, "# Bit Errors, # Frame Errors, # Simulated frames, BER, FER, Time for this SNR, Average time for one frame\n");
+    fprintf(file, "Eb/No, Es/No, Sigma, # Bit Errors, # Frame Errors, # Simulated frames, BER, FER, Time for this SNR, Average time for one frame\n");
 
     // Time computation
     clock_t start_time, end_time;
@@ -225,7 +225,8 @@ int main( int argc, char** argv) {
         ber = n_bit_errors / (n_frame_simulated * info_bits);
 
         // Writing in file
-        fprintf(file, "%li, %li, %li, %f, %f, %f, %f\n", 
+        fprintf(file, "%f, %f, %f, %li, %li, %li, %f, %f, %f, %f\n", 
+            val, SNR_better, sigma,
             n_bit_errors, n_frame_errors, n_frame_simulated,
             ber, fer, elapsed, average);
     }
