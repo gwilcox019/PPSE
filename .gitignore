@@ -1,1 +1,4 @@
-*.o
+*.x
+simulator
+simulator.x
+simulateur.dSYM/*
