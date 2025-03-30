@@ -182,8 +182,11 @@ int main( int argc, char** argv) {
 
     // Time computation
     clock_t start_time, end_time;
+    clock_t begin_step, end_step;
     float elapsed=0;
     float average=0;
+    float each_func[7] = {0};
+    float total_time_func = 0;
     
     //Init random
     srand(time(NULL));   // Initialization, should only be called once.
@@ -196,6 +199,7 @@ int main( int argc, char** argv) {
         n_bit_errors = 0;
         n_frame_errors = 0;
         n_frame_simulated = 0;
+        total_time_func = 0;
 
         SNR_better = val + 10*log10f(R); // have to use log10 not just log
         sigma = sqrt( 1 / (2 * pow(10, (SNR_better/10) ) ) ); 
@@ -203,32 +207,60 @@ int main( int argc, char** argv) {
         printf("min snr = %f, max snr = %f, current snr = %f, sigma = %f\n", min_SNR, max_SNR, val, sigma);
 
         do {
+            begin_step = clock();
             source_generate(U_K, info_bits);
+            end_step = clock();
+            each_func[0] = end_step-begin_step;
+            total_time_func += each_func[0];
             // printf("source : ");
             // print_array(U_K, info_bits);
             // printf("\n");
+            begin_step = clock();
             encoder_repetition_encode(U_K,C_N,info_bits,n_reps);
+            end_step = clock();
+            each_func[1] = end_step-begin_step;
+            total_time_func += each_func[1];
             // printf("encoded : ");
             // print_array(C_N, codeword_size);
             // printf("\n");
+            begin_step = clock();
             module_bpsk_modulate(C_N, X_N, codeword_size);
+            end_step = clock();
+            each_func[2] = end_step-begin_step;
+            total_time_func += each_func[2];
             // printf("modulated : ");
             // print_array_32(X_N, codeword_size);
             // printf("\n");
+            begin_step = clock();
             channel_AGWN_add_noise(X_N, Y_N, codeword_size, sigma, rangen);
+            end_step = clock();
+            each_func[3] = end_step-begin_step;
+            total_time_func += each_func[3];
             // printf("channel out : ");
             // print_array_float(Y_N, codeword_size);
             // printf("\n");
             //printf("%f\n",Y_N[0]);
+            begin_step = clock();
             modem_BPSK_demodulate(Y_N, L_N, codeword_size, sigma);
+            end_step = clock();
+            each_func[4] = end_step-begin_step;
+            total_time_func += each_func[4];
             // printf("demod : ");
             // print_array_float(L_N, codeword_size);
             // printf("\n");
+            begin_step = clock();
             decoder_fn ( L_N, V_K, info_bits, n_reps);
+            end_step = clock();
+            each_func[5] = end_step-begin_step;
+            total_time_func += each_func[5];
             // printf("decoded : ");
             // print_array(V_K, info_bits);
             // printf("\n");
+            begin_step = clock();
             monitor_check_errors(U_K, V_K, info_bits, &n_bit_errors, &n_frame_errors);
+            end_step = clock();
+            each_func[6] = end_step-begin_step;
+            total_time_func += each_func[6];
             n_frame_simulated++;
         } while (n_frame_errors < f_max);
 
@@ -238,6 +270,16 @@ int main( int argc, char** argv) {
 
         fer = (float)n_frame_errors/n_frame_simulated;
         ber = (float)n_bit_errors / (n_frame_simulated * info_bits);
+
+        //Time stats display
+        printf("\nTime elapsed for each step :\n");
+        printf("   for source_generate : %f (%f % of total time)\n", each_func[0], each_func[0] * 100 / total_time_func);
+        printf("   for encoder_repetition_encode : %f (%f % of total time)\n", each_func[1], each_func[1] * 100 / total_time_func);
+        printf("   for module_bpsk_modulate : %f (%f % of total time)\n", each_func[2], each_func[2] * 100 / total_time_func);
+        printf("   for channel_AGWN_add_noise : %f (%f % of total time)\n", each_func[3], each_func[3] * 100 / total_time_func);
+        printf("   for modem_BPSK_demodulate : %f (%f % of total time)\n", each_func[4], each_func[4] * 100 / total_time_func);
+        printf("   for codec_repetition_xxx_decode : %f (%f % of total time)\n", each_func[5], each_func[5] * 100 / total_time_func);
+        printf("   for monitor_check_errors : %f (%f % of total time)\n", each_func[6], each_func[6] * 100 / total_time_func);
 
         // Writing in file
         fprintf(file, "%f, %f, %f, %li, %li, %li, %f, %f, %f, %f\n", 
