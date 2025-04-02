@@ -48,6 +48,11 @@ void source_generate(uint8_t* UK, size_t k) {
         UK[k-1] = rand()%2 ;      // Returns a pseudo-random integer between 0 and RAND_MAX.
 }
 
+// alternative generator with all zero
+void source_generate_all_zeros(uint8_t *U_K, size_t K) {
+    memset(UK, 0, K);
+}
+
 // encodes frame of k bits by repeating it
 // read from the buffer U_K, write into C_N
 void encoder_repetition_encode(const uint8_t* UK, uint8_t* CN, size_t k, size_t repetitions) {
@@ -60,6 +65,10 @@ void encoder_repetition_encode(const uint8_t* UK, uint8_t* CN, size_t k, size_t 
 void module_bpsk_modulate (const uint8_t* CN, int32_t* XN, size_t n) {
     for (; n>0; n--)
         XN[n-1] = (CN[n-1]?-1:1);
+}
+
+void modem_BPSK_modulate_all_ones(const uint8_t *C_N, int32_t *X_N, size_t N) {
+    memset(X_N, 1, N);
 }
 
 // adds random noise following a normal distribution
@@ -130,10 +139,14 @@ int main( int argc, char** argv) {
     uint32_t f_max = 100;
     uint32_t info_bits = 32;
     uint32_t codeword_size = 128;
-    void (*decoder_fn) (const float*, uint8_t *, size_t, size_t) = codec_repetition_soft_decode; 
+    void  (*decoder_fn) (const float*, uint8_t *, size_t, size_t) = codec_repetition_soft_decode; *
+    void (*generate_fn) (uint8_t, size_t) = source_generate;
+    void (*modulate_fn) (const uint8_t, int32_t, size_t) = module_bpsk_modulate;
     char filepath[11] = {0};
     char filepath_stats[17] = {0};
-
+    // For long option - we set an alias
+    struct option zero_opt[2] = {{"src-all-zeros", no_argument, NULL, 'z'}, {"mod-all-ones", no_argument, NULL, 'o'},{0,0,0,0}};
+    int long_index=0;
     // We use getopt to parse command line arguments
     // An option is a parameter beginning with '-' (different from "-" and "--")
     // getopt (argc, argv, format)
@@ -143,7 +156,7 @@ int main( int argc, char** argv) {
     // The following argument is then stored in optarg variable
     int opt;
     //Loops while something to read
-    while ((opt = getopt(argc, argv, "m:M:s:e:K:N:D:f:")) != -1) {
+    while ((opt = getopt_long(argc, argv, "m:M:s:e:K:N:D:f:", zero_opt, &long_index)) != -1) {
         switch(opt) {
             case 'm': min_SNR = atof(optarg); break;
             case 'M': if ((max_SNR = atof(optarg)) == 0) max_SNR = 12; break;
@@ -155,7 +168,11 @@ int main( int argc, char** argv) {
                 if (strcmp(optarg, "rep-hard") == 0) decoder_fn = codec_repetition_hard_decode;
                 break;
             case 'f': sprintf(filepath, "sim_%i.csv", atoi(optarg)); sprintf(filepath_stats, "sim_%i_stats.csv", atoi(optarg)); break;
-                
+            case 'z': //Check long
+                generate_fn = source_generate_all_zeros;
+                break;
+            case 'o': //check long
+                modulate_fn = modem_BPSK_modulate_all_ones; break;
         }
     }
 
