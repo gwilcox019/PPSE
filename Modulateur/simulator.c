@@ -252,17 +252,17 @@ int main( int argc, char** argv) {
         SNR_better = val + 10*log10f(R); // have to use log10 not just log
         sigma = sqrt( 1 / (2 * pow(10, (SNR_better/10) ) ) ); 
 
-        printf("min snr = %f, max snr = %f, current snr = %f, sigma = %f\n", min_SNR, max_SNR, val, sigma);
+        printf("current snr = %f, min snr = %f, max snr = %f, sigma = %f\n", min_SNR, max_SNR, val, sigma);
 
         // simulate this snr until we reach desired number of errors
         do {
             // SOURCE GEN - create frame
             #ifdef ENABLE_STATS
-             begin_step = nanos();
+             begin_step = micros();
             #endif
             generate_fn(U_K, info_bits);
             #ifdef ENABLE_STATS
-            end_step = nanos(); 
+            end_step = micros(); 
             avg_time[0] += (end_step-begin_step);
 	    
             min_time[0]  = ((min_time[0] == -1 || (end_step-begin_step) < min_time[0]) ? (end_step-begin_step) : min_time[0]);
@@ -272,11 +272,11 @@ int main( int argc, char** argv) {
 
             // ENCODE - form codeword (repetitions)
             #ifdef ENABLE_STATS
-             begin_step = clock();
+             begin_step = micros();
             #endif
             encoder_repetition_encode(U_K,C_N,info_bits,n_reps);
             #ifdef ENABLE_STATS
-            end_step = clock(); 
+            end_step = micros(); 
             avg_time[1] += (end_step-begin_step);
             min_time[1]  = ((min_time[1] == -1 || (end_step-begin_step) < min_time[1]) ? (end_step-begin_step) : min_time[1]);
             max_time[1]  = ((max_time[1] == -1 || (end_step-begin_step) > max_time[1]) ? (end_step-begin_step) : max_time[1]);
@@ -285,11 +285,11 @@ int main( int argc, char** argv) {
 
             // MODULATE - convert to symbol
             #ifdef ENABLE_STATS
-             begin_step = clock();
+             begin_step = micros();
             #endif
             modulate_fn(C_N, X_N, codeword_size);
             #ifdef ENABLE_STATS
-            end_step = clock(); 
+            end_step = micros(); 
             avg_time[2] += (end_step-begin_step);
             min_time[2]  = ((min_time[2] == -1 || (end_step-begin_step) < min_time[0]) ? (end_step-begin_step) : min_time[0]);
             max_time[2]  = ((max_time[2] == -1 || (end_step-begin_step) > max_time[0]) ? (end_step-begin_step) : max_time[0]);
@@ -298,11 +298,11 @@ int main( int argc, char** argv) {
             
             // CHANNEL - add noise
             #ifdef ENABLE_STATS
-             begin_step = clock();
+             begin_step = micros();
             #endif
             channel_AGWN_add_noise(X_N, Y_N, codeword_size, sigma, rangen);
             #ifdef ENABLE_STATS
-            end_step = clock(); 
+            end_step = micros(); 
             avg_time[3] += (end_step-begin_step);
             min_time[3]  = ((min_time[3] == -1 || (end_step-begin_step) < min_time[0]) ? (end_step-begin_step) : min_time[0]);
             max_time[3]  = ((max_time[3] == -1 || (end_step-begin_step) > max_time[0]) ? (end_step-begin_step) : max_time[0]);
@@ -311,11 +311,11 @@ int main( int argc, char** argv) {
 
             // DEMODULATE - receive from channel
             #ifdef ENABLE_STATS
-             begin_step = clock();
+             begin_step = micros();
             #endif
             modem_BPSK_demodulate(Y_N, L_N, codeword_size, sigma);
             #ifdef ENABLE_STATS
-            end_step = clock(); 
+            end_step = micros(); 
             avg_time[4] += (end_step-begin_step);
             min_time[4]  = ((min_time[4] == -1 || (end_step-begin_step) < min_time[0]) ? (end_step-begin_step) : min_time[0]);
             max_time[4]  = ((max_time[4] == -1 || (end_step-begin_step) > max_time[0]) ? (end_step-begin_step) : max_time[0]);
@@ -324,11 +324,11 @@ int main( int argc, char** argv) {
 
             // DECODE - recover message 
             #ifdef ENABLE_STATS
-             begin_step = clock();
+             begin_step = micros();
             #endif
             decoder_fn ( L_N, V_K, info_bits, n_reps);
             #ifdef ENABLE_STATS
-            end_step = clock(); 
+            end_step = micros(); 
             avg_time[5] += (end_step-begin_step);
             min_time[5]  = ((min_time[5] == -1 || (end_step-begin_step) < min_time[0]) ? (end_step-begin_step) : min_time[0]);
             max_time[5]  = ((max_time[5] == -1 || (end_step-begin_step) > max_time[0]) ? (end_step-begin_step) : max_time[0]);
@@ -337,11 +337,11 @@ int main( int argc, char** argv) {
 
             // MONITOR - error check
             #ifdef ENABLE_STATS
-             begin_step = clock();
+             begin_step = micros();
             #endif
             monitor_check_errors(U_K, V_K, info_bits, &n_bit_errors, &n_frame_errors);
             #ifdef ENABLE_STATS
-            end_step = clock(); 
+            end_step = micros(); 
             avg_time[6] += (end_step-begin_step);
             min_time[6]  = ((min_time[6] == -1 || (end_step-begin_step) < min_time[0]) ? (end_step-begin_step) : min_time[0]);
             max_time[6]  = ((max_time[6] == -1 || (end_step-begin_step) > max_time[0]) ? (end_step-begin_step) : max_time[0]);
@@ -352,30 +352,30 @@ int main( int argc, char** argv) {
         } while (n_frame_errors < f_max);
 
         end_time = clock();
-        elapsed = (float) (end_time - start_time) / CLOCKS_PER_SEC; // seconds
+        elapsed = (float) (end_time - start_time) / (CLOCKS_PER_SEC*1000000); // microseconds
         average = elapsed / n_frame_simulated;
 
         fer = (float)n_frame_errors/n_frame_simulated;
         ber = (float)n_bit_errors / (n_frame_simulated * info_bits);
-        sim_thr = (float)n_frame_simulated * info_bits / elapsed / 1e6; // throughput in Mbps
+        sim_thr = (float)n_frame_simulated * info_bits / elapsed; // throughput in Mbps
 
         // Block stats display
         #ifdef ENABLE_STATS
         for (int i=0; i<7; i++) {
-            avg_time[i] = (float) avg_time[i]/n_frame_simulated / CLOCKS_PER_SEC;
+            avg_time[i] = (float) avg_time[i]/n_frame_simulated;
         }
         for (int i=0; i<7; i++) {
-            avg_thr[i] = (float) block_bits[i]/avg_time[i] / 1e6;
+            avg_thr[i] = (float) block_bits[i]/avg_time[i];
         }
 
         fprintf(file_stats,"%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",
-            avg_time[0], min_time[0], max_time[0], avg_thr[0], avg_time[0]/(total_time_func/n_frame_simulated) * 100,
-            avg_time[1], min_time[1], max_time[1], avg_thr[1], avg_time[1]/(total_time_func/n_frame_simulated) * 100,
-            avg_time[2], min_time[2], max_time[2], avg_thr[2], avg_time[2]/(total_time_func/n_frame_simulated) * 100,
-            avg_time[3], min_time[3], max_time[3], avg_thr[3], avg_time[3]/(total_time_func/n_frame_simulated) * 100,
-            avg_time[4], min_time[4], max_time[4], avg_thr[4], avg_time[4]/(total_time_func/n_frame_simulated) * 100,
-            avg_time[5], min_time[5], max_time[5], avg_thr[5], avg_time[5]/(total_time_func/n_frame_simulated) * 100,
-            avg_time[6], min_time[6], max_time[6], avg_thr[6], avg_time[6]/(total_time_func/n_frame_simulated) * 100 );
+            avg_time[0], min_time[0], max_time[0], avg_thr[0], avg_time[0] * 100/(total_time_func/n_frame_simulated),
+            avg_time[1], min_time[1], max_time[1], avg_thr[1], avg_time[1] * 100/(total_time_func/n_frame_simulated),
+            avg_time[2], min_time[2], max_time[2], avg_thr[2], avg_time[2] * 100/(total_time_func/n_frame_simulated),
+            avg_time[3], min_time[3], max_time[3], avg_thr[3], avg_time[3] * 100/(total_time_func/n_frame_simulated),
+            avg_time[4], min_time[4], max_time[4], avg_thr[4], avg_time[4] * 100/(total_time_func/n_frame_simulated),
+            avg_time[5], min_time[5], max_time[5], avg_thr[5], avg_time[5] * 100/(total_time_func/n_frame_simulated),
+            avg_time[6], min_time[6], max_time[6], avg_thr[6], avg_time[6] * 100/(total_time_func/n_frame_simulated) );
 	fflush(file_stats);
         #endif
 
