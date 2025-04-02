@@ -8,21 +8,21 @@ import pandas
 
 ## Files = (namefile, legend, print format)
 ## with print format being first the dot style (x, +, . ...) and then the line style (usually - for continuous or -- for dashed)
-files = [("sim_2.csv", "Coderate 0.25", "x-"), ("sim_3.csv", "Coderate 0.33", "x-"), 
-         ("sim_4.csv", "Coderate 0.5", "x-"), ("sim_5.csv", "Coderate 1", "x-")]
-output = "graph3"
-xlabel = "Signal to Noise Ratio (ES/N0) (dB)"  
-ylabel = "FER"
-x = " Es/No"
-y = " FER"
+files = [("testsim_1_zeroes_stats.csv", "Random numbers", "x-")]
+output = "compare_sim1"
+xlabel = "Signal to Noise Ratio (EB/N0) (dB)"  
+ylabel = "Average generation time"
+x = "SNR"
+y = "gen_avg"
 
 for elem in files:
     sim = pandas.read_csv(elem[0])
     simX = sim[[x]]
     simY = sim[[y]]
+    print(simX, simY)
+
     plt.plot(simX, simY, elem[2], label=elem[1])
 
-plt.yscale("log")
 plt.xlabel(xlabel)
 plt.ylabel(ylabel)
 plt.legend()
