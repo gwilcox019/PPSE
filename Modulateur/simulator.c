@@ -50,7 +50,7 @@ void source_generate(uint8_t* UK, size_t k) {
 
 // alternative generator with all zero
 void source_generate_all_zeros(uint8_t *U_K, size_t K) {
-    memset(UK, 0, K);
+    memset(U_K, 0, K);
 }
 
 // encodes frame of k bits by repeating it
@@ -139,16 +139,16 @@ int main( int argc, char** argv) {
     uint32_t f_max = 100;
     uint32_t info_bits = 32;
     uint32_t codeword_size = 128;
-    void  (*decoder_fn) (const float*, uint8_t *, size_t, size_t) = codec_repetition_soft_decode; *
-    void (*generate_fn) (uint8_t, size_t) = source_generate;
-    void (*modulate_fn) (const uint8_t, int32_t, size_t) = module_bpsk_modulate;
+    void  (*decoder_fn) (const float*, uint8_t *, size_t, size_t) = codec_repetition_soft_decode;
+    void (*generate_fn) (uint8_t*, size_t) = source_generate;
+    void (*modulate_fn) (const uint8_t*, int32_t*, size_t) = module_bpsk_modulate;
     char filepath[11] = {0};
     char filepath_stats[17] = {0};
     // For long option - we set an alias
-    struct option zero_opt[2] = {{"src-all-zeros", no_argument, NULL, 'z'}, {"mod-all-ones", no_argument, NULL, 'o'},{0,0,0,0}};
+    struct option zero_opt[3] = {{"src-all-zeros", no_argument, NULL, 'z'}, {"mod-all-ones", no_argument, NULL, 'o'},{0,0,0,0}};
     int long_index=0;
     // We use getopt to parse command line arguments
-    // An option is a parameter beginning with '-' (different from "-" and "--")
+    // An option is a parameter beginning with '-' (different from only "-" or starting with "--") 
     // getopt (argc, argv, format)
     // Format is a string containing all valid options (as letters) to be parsed
     // If one of those chars is followed by a ':', it means it expects an argument after
@@ -206,11 +206,12 @@ int main( int argc, char** argv) {
     fprintf(file, "Eb/No,Es/No,Sigma,# Bit Errors,# Frame Errors,# Simulated frames,BER,FER,Time for this SNR,Average time for one frame, SNR throughput\n");
     fprintf(file_stats, "gen_avg,gen_min,gen_max,gen_thr,gen_percent,encode_avg,encode_min,encode_max,encode_thr,encode_percent,bpsk_avg,bpsk_min,bpsk_max,bpsk_thr,bpsk_percent,awgn_avg,awgn_min,awgn_max,awgn_thr,awgn_percent,demodulate_avg,demodulate_min_demodulate_max,demodulate_thr,demodulate_percent,decode_avg,decode_min,decode_max,decode_thr,decode_percent,monitor_avg,monitor_min,monitor_max,monitor_thr,monitor_percent");
     // Time computation
-    clock_t start_time, end_time;
-    clock_t begin_step, end_step;
-    float elapsed=0;
-    float average=0;
-    float sim_thr;
+    clock_t start_time, end_time; // total SNR sim time
+    clock_t begin_step, end_step; // block times
+    float elapsed=0; // total time for 1 SNR sim (including all calculations)
+    float total_time_func = 0; // total time for 1 SNR sim NOT including calculations
+    float average=0; // average time per frame for 1 SNR sim
+    float sim_thr; // throughput for 1 SNR sim (Mbps)
 
     //Per-block statistics
     #ifdef ENABLE_STATS
@@ -218,7 +219,6 @@ int main( int argc, char** argv) {
     float max_time[7] = {-1};
     float avg_time[7] = {0};
     float avg_thr[7] = {0};
-    float total_time_func = 0;
     #endif
     
     //Init random
