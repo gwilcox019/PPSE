@@ -255,8 +255,8 @@ int main( int argc, char** argv) {
             #ifdef ENABLE_STATS
             end_step = clock(); 
             avg_time[0] += (end_step-begin_step);
-            min_func[0]  = ((min_func[0] == -1 || (end_step-begin_step) < min_func[0]) ? (end_step-begin_step) : min_func[0]);
-            max_func[0]  = ((max_func[0] == -1 || (end_step-begin_step) > max_func[0]) ? (end_step-begin_step) : max_func[0]);
+            min_time[0]  = ((min_time[0] == -1 || (end_step-begin_step) < min_time[0]) ? (end_step-begin_step) : min_time[0]);
+            max_time[0]  = ((max_time[0] == -1 || (end_step-begin_step) > max_time[0]) ? (end_step-begin_step) : max_time[0]);
             total_time_func += (end_step-begin_step);
             #endif
 
@@ -268,8 +268,8 @@ int main( int argc, char** argv) {
             #ifdef ENABLE_STATS
             end_step = clock(); 
             avg_time[1] += (end_step-begin_step);
-            min_func[1]  = ((min_func[1] == -1 || (end_step-begin_step) < min_func[1]) ? (end_step-begin_step) : min_func[1]);
-            max_func[1]  = ((max_func[1] == -1 || (end_step-begin_step) > max_func[1]) ? (end_step-begin_step) : max_func[1]);
+            min_time[1]  = ((min_time[1] == -1 || (end_step-begin_step) < min_time[1]) ? (end_step-begin_step) : min_time[1]);
+            max_time[1]  = ((max_time[1] == -1 || (end_step-begin_step) > max_time[1]) ? (end_step-begin_step) : max_time[1]);
             total_time_func += (end_step-begin_step);
             #endif
 
@@ -281,8 +281,8 @@ int main( int argc, char** argv) {
             #ifdef ENABLE_STATS
             end_step = clock(); 
             avg_time[2] += (end_step-begin_step);
-            min_func[2]  = ((min_func[2] == -1 || (end_step-begin_step) < min_func[0]) ? (end_step-begin_step) : min_func[0]);
-            max_func[2]  = ((max_func[2] == -1 || (end_step-begin_step) > max_func[0]) ? (end_step-begin_step) : max_func[0]);
+            min_time[2]  = ((min_time[2] == -1 || (end_step-begin_step) < min_time[0]) ? (end_step-begin_step) : min_time[0]);
+            max_time[2]  = ((max_time[2] == -1 || (end_step-begin_step) > max_time[0]) ? (end_step-begin_step) : max_time[0]);
             total_time_func += (end_step-begin_step);
             #endif
             
@@ -294,8 +294,8 @@ int main( int argc, char** argv) {
             #ifdef ENABLE_STATS
             end_step = clock(); 
             avg_time[3] += (end_step-begin_step);
-            min_func[3]  = ((min_func[3] == -1 || (end_step-begin_step) < min_func[0]) ? (end_step-begin_step) : min_func[0]);
-            max_func[3]  = ((max_func[3] == -1 || (end_step-begin_step) > max_func[0]) ? (end_step-begin_step) : max_func[0]);
+            min_time[3]  = ((min_time[3] == -1 || (end_step-begin_step) < min_time[0]) ? (end_step-begin_step) : min_time[0]);
+            max_time[3]  = ((max_time[3] == -1 || (end_step-begin_step) > max_time[0]) ? (end_step-begin_step) : max_time[0]);
             total_time_func += (end_step-begin_step);
             #endif
 
@@ -307,8 +307,8 @@ int main( int argc, char** argv) {
             #ifdef ENABLE_STATS
             end_step = clock(); 
             avg_time[4] += (end_step-begin_step);
-            min_func[4]  = ((min_func[4] == -1 || (end_step-begin_step) < min_func[0]) ? (end_step-begin_step) : min_func[0]);
-            max_func[4]  = ((max_func[4] == -1 || (end_step-begin_step) > max_func[0]) ? (end_step-begin_step) : max_func[0]);
+            min_time[4]  = ((min_time[4] == -1 || (end_step-begin_step) < min_time[0]) ? (end_step-begin_step) : min_time[0]);
+            max_time[4]  = ((max_time[4] == -1 || (end_step-begin_step) > max_time[0]) ? (end_step-begin_step) : max_time[0]);
             total_time_func += (end_step-begin_step);
             #endif
 
@@ -320,8 +320,8 @@ int main( int argc, char** argv) {
             #ifdef ENABLE_STATS
             end_step = clock(); 
             avg_time[5] += (end_step-begin_step);
-            min_func[5]  = ((min_func[5] == -1 || (end_step-begin_step) < min_func[0]) ? (end_step-begin_step) : min_func[0]);
-            max_func[5]  = ((max_func[5] == -1 || (end_step-begin_step) > max_func[0]) ? (end_step-begin_step) : max_func[0]);
+            min_time[5]  = ((min_time[5] == -1 || (end_step-begin_step) < min_time[0]) ? (end_step-begin_step) : min_time[0]);
+            max_time[5]  = ((max_time[5] == -1 || (end_step-begin_step) > max_time[0]) ? (end_step-begin_step) : max_time[0]);
             total_time_func += (end_step-begin_step);
             #endif
 
@@ -333,8 +333,8 @@ int main( int argc, char** argv) {
             #ifdef ENABLE_STATS
             end_step = clock(); 
             avg_time[6] += (end_step-begin_step);
-            min_func[6]  = ((min_func[6] == -1 || (end_step-begin_step) < min_func[0]) ? (end_step-begin_step) : min_func[0]);
-            max_func[6]  = ((max_func[6] == -1 || (end_step-begin_step) > max_func[0]) ? (end_step-begin_step) : max_func[0]);
+            min_time[6]  = ((min_time[6] == -1 || (end_step-begin_step) < min_time[0]) ? (end_step-begin_step) : min_time[0]);
+            max_time[6]  = ((max_time[6] == -1 || (end_step-begin_step) > max_time[0]) ? (end_step-begin_step) : max_time[0]);
             total_time_func += (end_step-begin_step);
             #endif
 
