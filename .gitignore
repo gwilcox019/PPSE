@@ -1,4 +1,4 @@
 *.x
-simulator
-simulator.x
-simulateur.dSYM/*
+Modulateur/simulator
+Modulateur/simulator.x
+Modulateur/simulateur.dSYM/*
