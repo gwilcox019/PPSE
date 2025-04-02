@@ -84,6 +84,11 @@ void modem_BPSK_demodulate (const float* Y_N, float* L_N, size_t n, float sigma)
         memcpy (L_N, Y_N, n*sizeof(float));
 }
 
+// A FAIRE PAR GRACE
+void quantizer_transform8 (cost float* L_N, int8_t* L8_N, size_t N, size_t s, size_t f) {
+
+}
+
 void codec_repetition_hard_decode (const float* L_N, uint8_t* V_N, size_t k, size_t n_reps) {
     // Reduce float to corresponding int (-1 ; 1)
     // Then average out the hard decisions by summing them
@@ -351,7 +356,7 @@ int main( int argc, char** argv) {
 
         // Block stats display
         #ifdef ENABLE_STATS
-        for (int i=0; i<7, i++) {
+        for (int i=0; i<7; i++) {
             avg_time[i] = (float) avg_time[i]/n_frame_simulated / CLOCKS_PER_SEC;
         }
         for (int i=0; i<7; i++) {
