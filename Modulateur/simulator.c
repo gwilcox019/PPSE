@@ -172,6 +172,9 @@ int main( int argc, char** argv) {
     float R = (float)info_bits/codeword_size; // Ratio - need to cast to float else rounds to ints
     uint32_t n_reps = codeword_size/info_bits; //Number of repetitions
 
+    // blocks used :          source gen, encode,        modulate,      channel,       demodulate,    decode,    monitor
+    uint32_t block_bits[7] = {info_bits,  codeword_size, codeword_size, codeword_size, codeword_size, info_bits, info_bits}; // number of bits for each block
+
     // Stats - computed after one loop
     float ber, fer;
 
@@ -186,12 +189,13 @@ int main( int argc, char** argv) {
     clock_t begin_step, end_step;
     float elapsed=0;
     float average=0;
-    float throughput;
+    float sim_thr;
 
     //Per-block statistics
     float min_time[7] = {-1};
     float max_time[7] = {-1};
     float avg_time[7] = {0};
+    float avg_thr[7] = {0};
     float total_time_func = 0;
     
     //Init random
@@ -218,6 +222,7 @@ int main( int argc, char** argv) {
 
         // simulate this snr until we reach desired number of errors
         do {
+            // SOURCE GEN - create frame
             #ifdef ENABLE_STATS
              begin_step = clock();
             #endif
@@ -229,9 +234,8 @@ int main( int argc, char** argv) {
             max_func[0]  = ((max_func[0] == -1 || each_func[0] > max_func[0]) ? each_func[0] : max_func[0]);
             total_time_func += each_func[0];
             #endif
-            // printf("source : ");
-            // print_array(U_K, info_bits);
-            // printf("\n");
+
+            // ENCODE - form codeword (repetitions)
             #ifdef ENABLE_STATS
              begin_step = clock();
             #endif
@@ -244,9 +248,7 @@ int main( int argc, char** argv) {
             total_time_func += each_func[1];
             #endif
 
-            // printf("encoded : ");
-            // print_array(C_N, codeword_size);
-            // printf("\n");
+            // MODULATE - convert to symbol
             #ifdef ENABLE_STATS
              begin_step = clock();
             #endif
@@ -258,9 +260,8 @@ int main( int argc, char** argv) {
             max_func[2]  = ((max_func[2] == -1 || each_func[0] > max_func[0]) ? each_func[0] : max_func[0]);
             total_time_func += each_func[2];
             #endif
-            // printf("modulated : ");
-            // print_array_32(X_N, codeword_size);
-            // printf("\n");
+            
+            // CHANNEL - add noise
             #ifdef ENABLE_STATS
              begin_step = clock();
             #endif
@@ -273,10 +274,7 @@ int main( int argc, char** argv) {
             total_time_func += each_func[3];
             #endif
 
-            // printf("channel out : ");
-            // print_array_float(Y_N, codeword_size);
-            // printf("\n");
-            //printf("%f\n",Y_N[0]);
+            // DEMODULATE - receive from channel
             #ifdef ENABLE_STATS
              begin_step = clock();
             #endif
@@ -289,9 +287,7 @@ int main( int argc, char** argv) {
             total_time_func += each_func[4];
             #endif
 
-            // printf("demod : ");
-            // print_array_float(L_N, codeword_size);
-            // printf("\n");
+            // DECODE - recover message 
             #ifdef ENABLE_STATS
              begin_step = clock();
             #endif
@@ -304,9 +300,7 @@ int main( int argc, char** argv) {
             total_time_func += each_func[5];
             #endif
 
-            // printf("decoded : ");
-            // print_array(V_K, info_bits);
-            // printf("\n");
+            // MONITOR - error check
             #ifdef ENABLE_STATS
              begin_step = clock();
             #endif
@@ -328,11 +322,11 @@ int main( int argc, char** argv) {
 
         fer = (float)n_frame_errors/n_frame_simulated;
         ber = (float)n_bit_errors / (n_frame_simulated * info_bits);
-        throughput = (float)n_frame_simulated * info_bits / elapsed / 1000000; // throughput in Mbps
+
 
         //Time stats display
         for (int i=0; i<7, i++) {
-            avg_time[i] = (float) avg_time[i]/n_frame_simulated;
+            avg_time[i] = (float) avg_time[i]/n_frame_simulated / CLOCKS_PER_SEC;
         }
         printf("\nTime elapsed for each step :\n");
         printf("   for source_generate : %f (%f %% of total time)\n", each_func[0], each_func[0] * 100 / total_time_func);
@@ -342,6 +336,12 @@ int main( int argc, char** argv) {
         printf("   for modem_BPSK_demodulate : %f (%f %% of total time)\n", each_func[4], each_func[4] * 100 / total_time_func);
         printf("   for codec_repetition_xxx_decode : %f (%f %% of total time)\n", each_func[5], each_func[5] * 100 / total_time_func);
         printf("   for monitor_check_errors : %f (%f %% of total time)\n", each_func[6], each_func[6] * 100 / total_time_func);
+
+        // THROUGHPUT
+        sim_thr = (float)n_frame_simulated * info_bits / elapsed / 1e6; // throughput in Mbps
+        for (int i=0; i<7; i++) {
+            avg_thr[i] = (float) block_bits[i]/avg_time[i] / 1e6;
+        }
 
         // Writing in file
         fprintf(file, "%f, %f, %f, %li, %li, %li, %f, %f, %f, %f\n", 
