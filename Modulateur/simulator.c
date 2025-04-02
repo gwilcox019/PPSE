@@ -50,7 +50,7 @@ void source_generate(uint8_t* UK, size_t k) {
 
 // alternative generator with all zero
 void source_generate_all_zeros(uint8_t *U_K, size_t K) {
-    memset(U_K, 0, K);
+    memset(U_K, 0, K*sizeof(uint8_t));
 }
 
 // encodes frame of k bits by repeating it
@@ -68,7 +68,7 @@ void module_bpsk_modulate (const uint8_t* CN, int32_t* XN, size_t n) {
 }
 
 void modem_BPSK_modulate_all_ones(const uint8_t *C_N, int32_t *X_N, size_t N) {
-    memset(X_N, 1, N);
+    memset(X_N, 1, N*sizeof(int32_t));
 }
 
 // adds random noise following a normal distribution
@@ -235,9 +235,9 @@ int main( int argc, char** argv) {
         total_time_func = 0;
         
         #ifdef ENABLE_STATS
-        memset(min_time, -1, 7);
-        memset(max_time, -1, 7);
-        memset(avg_time, 0, 7);
+        memset(min_time, -1, 7*sizeof(float));
+        memset(max_time, -1, 7*sizeof(float));
+        memset(avg_time, 0, 7*sizeof(float));
         #endif
 
         SNR_better = val + 10*log10f(R); // have to use log10 not just log
@@ -251,13 +251,13 @@ int main( int argc, char** argv) {
             #ifdef ENABLE_STATS
              begin_step = clock();
             #endif
-            source_generate(U_K, info_bits);
+            generate_fn(U_K, info_bits);
             #ifdef ENABLE_STATS
             end_step = clock(); 
             avg_time[0] += (end_step-begin_step);
-            min_func[0]  = ((min_func[0] == -1 || each_func[0] < min_func[0]) ? each_func[0] : min_func[0]);
-            max_func[0]  = ((max_func[0] == -1 || each_func[0] > max_func[0]) ? each_func[0] : max_func[0]);
-            total_time_func += each_func[0];
+            min_func[0]  = ((min_func[0] == -1 || (end_step-begin_step) < min_func[0]) ? (end_step-begin_step) : min_func[0]);
+            max_func[0]  = ((max_func[0] == -1 || (end_step-begin_step) > max_func[0]) ? (end_step-begin_step) : max_func[0]);
+            total_time_func += (end_step-begin_step);
             #endif
 
             // ENCODE - form codeword (repetitions)
@@ -268,22 +268,22 @@ int main( int argc, char** argv) {
             #ifdef ENABLE_STATS
             end_step = clock(); 
             avg_time[1] += (end_step-begin_step);
-            min_func[1]  = ((min_func[1] == -1 || each_func[1] < min_func[1]) ? each_func[1] : min_func[1]);
-            max_func[1]  = ((max_func[1] == -1 || each_func[1] > max_func[1]) ? each_func[1] : max_func[1]);
-            total_time_func += each_func[1];
+            min_func[1]  = ((min_func[1] == -1 || (end_step-begin_step) < min_func[1]) ? (end_step-begin_step) : min_func[1]);
+            max_func[1]  = ((max_func[1] == -1 || (end_step-begin_step) > max_func[1]) ? (end_step-begin_step) : max_func[1]);
+            total_time_func += (end_step-begin_step);
             #endif
 
             // MODULATE - convert to symbol
             #ifdef ENABLE_STATS
              begin_step = clock();
             #endif
-            module_bpsk_modulate(C_N, X_N, codeword_size);
+            modulate_fn(C_N, X_N, codeword_size);
             #ifdef ENABLE_STATS
             end_step = clock(); 
             avg_time[2] += (end_step-begin_step);
-            min_func[2]  = ((min_func[2] == -1 || each_func[0] < min_func[0]) ? each_func[0] : min_func[0]);
-            max_func[2]  = ((max_func[2] == -1 || each_func[0] > max_func[0]) ? each_func[0] : max_func[0]);
-            total_time_func += each_func[2];
+            min_func[2]  = ((min_func[2] == -1 || (end_step-begin_step) < min_func[0]) ? (end_step-begin_step) : min_func[0]);
+            max_func[2]  = ((max_func[2] == -1 || (end_step-begin_step) > max_func[0]) ? (end_step-begin_step) : max_func[0]);
+            total_time_func += (end_step-begin_step);
             #endif
             
             // CHANNEL - add noise
@@ -294,9 +294,9 @@ int main( int argc, char** argv) {
             #ifdef ENABLE_STATS
             end_step = clock(); 
             avg_time[3] += (end_step-begin_step);
-            min_func[3]  = ((min_func[3] == -1 || each_func[0] < min_func[0]) ? each_func[0] : min_func[0]);
-            max_func[3]  = ((max_func[3] == -1 || each_func[0] > max_func[0]) ? each_func[0] : max_func[0]);
-            total_time_func += each_func[3];
+            min_func[3]  = ((min_func[3] == -1 || (end_step-begin_step) < min_func[0]) ? (end_step-begin_step) : min_func[0]);
+            max_func[3]  = ((max_func[3] == -1 || (end_step-begin_step) > max_func[0]) ? (end_step-begin_step) : max_func[0]);
+            total_time_func += (end_step-begin_step);
             #endif
 
             // DEMODULATE - receive from channel
@@ -307,9 +307,9 @@ int main( int argc, char** argv) {
             #ifdef ENABLE_STATS
             end_step = clock(); 
             avg_time[4] += (end_step-begin_step);
-            min_func[4]  = ((min_func[4] == -1 || each_func[0] < min_func[0]) ? each_func[0] : min_func[0]);
-            max_func[4]  = ((max_func[4] == -1 || each_func[0] > max_func[0]) ? each_func[0] : max_func[0]);
-            total_time_func += each_func[4];
+            min_func[4]  = ((min_func[4] == -1 || (end_step-begin_step) < min_func[0]) ? (end_step-begin_step) : min_func[0]);
+            max_func[4]  = ((max_func[4] == -1 || (end_step-begin_step) > max_func[0]) ? (end_step-begin_step) : max_func[0]);
+            total_time_func += (end_step-begin_step);
             #endif
 
             // DECODE - recover message 
@@ -320,9 +320,9 @@ int main( int argc, char** argv) {
             #ifdef ENABLE_STATS
             end_step = clock(); 
             avg_time[5] += (end_step-begin_step);
-            min_func[5]  = ((min_func[5] == -1 || each_func[0] < min_func[0]) ? each_func[0] : min_func[0]);
-            max_func[5]  = ((max_func[5] == -1 || each_func[0] > max_func[0]) ? each_func[0] : max_func[0]);
-            total_time_func += each_func[5];
+            min_func[5]  = ((min_func[5] == -1 || (end_step-begin_step) < min_func[0]) ? (end_step-begin_step) : min_func[0]);
+            max_func[5]  = ((max_func[5] == -1 || (end_step-begin_step) > max_func[0]) ? (end_step-begin_step) : max_func[0]);
+            total_time_func += (end_step-begin_step);
             #endif
 
             // MONITOR - error check
@@ -333,9 +333,9 @@ int main( int argc, char** argv) {
             #ifdef ENABLE_STATS
             end_step = clock(); 
             avg_time[6] += (end_step-begin_step);
-            min_func[6]  = ((min_func[6] == -1 || each_func[0] < min_func[0]) ? each_func[0] : min_func[0]);
-            max_func[6]  = ((max_func[6] == -1 || each_func[0] > max_func[0]) ? each_func[0] : max_func[0]);
-            total_time_func += each_func[6];
+            min_func[6]  = ((min_func[6] == -1 || (end_step-begin_step) < min_func[0]) ? (end_step-begin_step) : min_func[0]);
+            max_func[6]  = ((max_func[6] == -1 || (end_step-begin_step) > max_func[0]) ? (end_step-begin_step) : max_func[0]);
+            total_time_func += (end_step-begin_step);
             #endif
 
             n_frame_simulated++;
@@ -351,7 +351,7 @@ int main( int argc, char** argv) {
 
         // Block stats display
         #ifdef ENABLE_STATS
-        for (int i=0; i<7, i++) {
+        for (int i=0; i<7; i++) {
             avg_time[i] = (float) avg_time[i]/n_frame_simulated / CLOCKS_PER_SEC;
         }
         for (int i=0; i<7; i++) {
