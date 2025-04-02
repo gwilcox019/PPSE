@@ -358,7 +358,7 @@ int main( int argc, char** argv) {
             avg_thr[i] = (float) block_bits[i]/avg_time[i] / 1e6;
         }
 
-        fprintf(file_stats,"%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f",
+        fprintf(file_stats,"%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f",
             avg_time[0], min_time[0], max_time[0], avg_thr[0], avg_time[0]/(total_time_func/n_frame_simulated) * 100,
             avg_time[1], min_time[1], max_time[1], avg_thr[1], avg_time[1]/(total_time_func/n_frame_simulated) * 100,
             avg_time[2], min_time[2], max_time[2], avg_thr[2], avg_time[2]/(total_time_func/n_frame_simulated) * 100,
