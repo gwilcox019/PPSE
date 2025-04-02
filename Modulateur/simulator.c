@@ -273,13 +273,13 @@ int main( int argc, char** argv) {
 
         //Time stats display
         printf("\nTime elapsed for each step :\n");
-        printf("   for source_generate : %f (%f \% of total time)\n", each_func[0], each_func[0] * 100 / total_time_func);
-        printf("   for encoder_repetition_encode : %f (%f \% of total time)\n", each_func[1], each_func[1] * 100 / total_time_func);
-        printf("   for module_bpsk_modulate : %f (%f \% of total time)\n", each_func[2], each_func[2] * 100 / total_time_func);
-        printf("   for channel_AGWN_add_noise : %f (%f \% of total time)\n", each_func[3], each_func[3] * 100 / total_time_func);
-        printf("   for modem_BPSK_demodulate : %f (%f \% of total time)\n", each_func[4], each_func[4] * 100 / total_time_func);
-        printf("   for codec_repetition_xxx_decode : %f (%f \% of total time)\n", each_func[5], each_func[5] * 100 / total_time_func);
-        printf("   for monitor_check_errors : %f (%f \% of total time)\n", each_func[6], each_func[6] * 100 / total_time_func);
+        printf("   for source_generate : %f (%f %% of total time)\n", each_func[0], each_func[0] * 100 / total_time_func);
+        printf("   for encoder_repetition_encode : %f (%f %% of total time)\n", each_func[1], each_func[1] * 100 / total_time_func);
+        printf("   for module_bpsk_modulate : %f (%f %% of total time)\n", each_func[2], each_func[2] * 100 / total_time_func);
+        printf("   for channel_AGWN_add_noise : %f (%f %% of total time)\n", each_func[3], each_func[3] * 100 / total_time_func);
+        printf("   for modem_BPSK_demodulate : %f (%f %% of total time)\n", each_func[4], each_func[4] * 100 / total_time_func);
+        printf("   for codec_repetition_xxx_decode : %f (%f %% of total time)\n", each_func[5], each_func[5] * 100 / total_time_func);
+        printf("   for monitor_check_errors : %f (%f %% of total time)\n", each_func[6], each_func[6] * 100 / total_time_func);
 
         // Writing in file
         fprintf(file, "%f, %f, %f, %li, %li, %li, %f, %f, %f, %f\n", 
