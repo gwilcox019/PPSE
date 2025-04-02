@@ -132,6 +132,7 @@ int main( int argc, char** argv) {
     uint32_t codeword_size = 128;
     void (*decoder_fn) (const float*, uint8_t *, size_t, size_t) = codec_repetition_soft_decode; 
     char filepath[11] = {0};
+    char filepath_stats[17] = {0};
 
     // We use getopt to parse command line arguments
     // An option is a parameter beginning with '-' (different from "-" and "--")
@@ -153,7 +154,7 @@ int main( int argc, char** argv) {
             case 'D':
                 if (strcmp(optarg, "rep-hard") == 0) decoder_fn = codec_repetition_hard_decode;
                 break;
-            case 'f': sprintf(filepath, "sim_%i.csv", atoi(optarg)); break;
+            case 'f': sprintf(filepath, "sim_%i.csv", atoi(optarg)); sprintf(filepath_stats, "sim_%i_stats.csv", atoi(optarg)); break;
                 
         }
     }
@@ -179,8 +180,11 @@ int main( int argc, char** argv) {
     FILE* file;
     if (filepath[0] == 0) file = stdout;
     else file = fopen(filepath, "w");
-    fprintf(file, "Eb/No, Es/No, Sigma, # Bit Errors, # Frame Errors, # Simulated frames, BER, FER, Time for this SNR, Average time for one frame\n");
-
+    FILE* file_stats;
+    if (filepath[0] == 0) file_stats = stdout;
+    else file_stats = fopen(filepath, "w");
+    fprintf(file, "Eb/No,Es/No,Sigma,# Bit Errors,# Frame Errors,# Simulated frames,BER,FER,Time for this SNR,Average time for one frame\n");
+    fprintf(file_stats, "Gen_avg,Gen_min,Gen_max,encode_avg,encode_min,encode_max,bpsk_avg,bpsk_min,bpsk_max,awgn_avg,awgn_min,awgn_max,demodulate_avg,demodulate_min_demodulate_max,decode_avg,decode_min,decode_max,monitor_avg,monitor_min,monitor_max");
     // Time computation
     clock_t start_time, end_time;
     clock_t begin_step, end_step;
@@ -331,71 +335,22 @@ int main( int argc, char** argv) {
         for (int i=0; i<7, i++) {
             avg_time[i] = (float) avg_time[i]/n_frame_simulated;
         }
-        printf("\nTime elapsed for each step :\n");
-        printf("   for source_generate : %f (%f %% of total time)\n", each_func[0], each_func[0] * 100 / total_time_func);
-        printf("   for encoder_repetition_encode : %f (%f %% of total time)\n", each_func[1], each_func[1] * 100 / total_time_func);
-        printf("   for module_bpsk_modulate : %f (%f %% of total time)\n", each_func[2], each_func[2] * 100 / total_time_func);
-        printf("   for channel_AGWN_add_noise : %f (%f %% of total time)\n", each_func[3], each_func[3] * 100 / total_time_func);
-        printf("   for modem_BPSK_demodulate : %f (%f %% of total time)\n", each_func[4], each_func[4] * 100 / total_time_func);
-        printf("   for codec_repetition_xxx_decode : %f (%f %% of total time)\n", each_func[5], each_func[5] * 100 / total_time_func);
-        printf("   for monitor_check_errors : %f (%f %% of total time)\n", each_func[6], each_func[6] * 100 / total_time_func);
+
+        fprintf("%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f",
+            avg_time[0], min_time[0], max_time[0],
+            avg_time[1], min_time[1], max_time[1],
+            avg_time[2], min_time[2], max_time[2],
+            avg_time[3], min_time[3], max_time[3],
+            avg_time[4], min_time[4], max_time[4],
+            avg_time[5], min_time[5], max_time[5],
+            avg_time[6], min_time[6], max_time[6]);
 
         // Writing in file
         fprintf(file, "%f, %f, %f, %li, %li, %li, %f, %f, %f, %f\n", 
             val, SNR_better, sigma,
             n_bit_errors, n_frame_errors, n_frame_simulated,
             ber, fer, elapsed, average);
-
     }
-            
-
-    // functional testing
-    /*
-    size_t K = 5, N = 10, REPS = 2;
-    uint8_t UK[N], CN[N];
-    int32_t XN[N];
-    float YN[N], LN[N];
-    uint8_t VN[K];
-    
-    for (int i=0; i<1; i++) {
-        //float sigma=0;
-        // Generate message
-        source_generate(UK, K);
-        printf("\nTableau genere : ");
-        print_array(UK, K);
-
-        // Encoded message
-        encoder_repetition_encode(UK,CN,K,REPS);
-        printf("\nTableau encode : ");
-        print_array(CN,N);
-
-        // Modulated message
-        module_bpsk_modulate(CN, XN, N);
-        printf("\nTableau module : ");
-        print_array_32(XN, N);
-        printf("\n__________\n");
-
-        // Canal message
-        channel_AGWN_add_noise(XN, YN, N, 0.1);
-        printf("Tableau transmis : \n");
-        print_array_float(YN, N);
-        printf("\n");
-
-        // Demodulated message
-        modem_BPSK_demodulate(YN, LN, N, 0.1);
-        printf("Tableau demodule : \n");
-        print_array_float(LN, N);
-        printf("\n");
-
-        printf("Tableau hard dec : \n");
-        codec_repetition_hard_decode(LN, VN, K, REPS);
-        printf("\n");
-
-        printf("Tableau soft dec : \n");
-        codec_repetition_soft_decode(LN, VN, K, REPS);
-        printf("\n");
-    }
-    */
     gsl_rng_free (rangen);
     return 0;
 }
