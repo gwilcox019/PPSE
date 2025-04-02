@@ -190,6 +190,7 @@ int main( int argc, char** argv) {
     clock_t begin_step, end_step;
     float elapsed=0;
     float average=0;
+    float throughput;
 
     //Per-block statistics
     float min_time[7] = {-1};
@@ -219,6 +220,7 @@ int main( int argc, char** argv) {
 
         printf("min snr = %f, max snr = %f, current snr = %f, sigma = %f\n", min_SNR, max_SNR, val, sigma);
 
+        // simulate this snr until we reach desired number of errors
         do {
             #ifdef ENABLE_STATS
              begin_step = clock();
@@ -325,11 +327,12 @@ int main( int argc, char** argv) {
         } while (n_frame_errors < f_max);
 
         end_time = clock();
-        elapsed = (float) (end_time - start_time) / CLOCKS_PER_SEC;
+        elapsed = (float) (end_time - start_time) / CLOCKS_PER_SEC; // seconds
         average = elapsed / n_frame_simulated;
 
         fer = (float)n_frame_errors/n_frame_simulated;
         ber = (float)n_bit_errors / (n_frame_simulated * info_bits);
+        throughput = (float)n_frame_simulated * info_bits / elapsed / 1000000; // throughput in Mbps
 
         //Time stats display
         for (int i=0; i<7, i++) {
