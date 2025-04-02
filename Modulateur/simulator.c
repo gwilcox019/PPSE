@@ -13,7 +13,6 @@
 #include <gsl/gsl_randist.h>
 #include <getopt.h>
 
-#define ENABLE_STATS 1
 
 // gcc simulator.c -o simulator.x -Wall -std=c99 -I/usr/include/gsl -lgsl -lgslcblas -lm
 // (change I flag for where gsl is on the machine)
@@ -329,6 +328,9 @@ int main( int argc, char** argv) {
         ber = (float)n_bit_errors / (n_frame_simulated * info_bits);
 
         //Time stats display
+        for (int i=0; i<7, i++) {
+            avg_time[i] = (float) avg_time[i]/n_frame_simulated;
+        }
         printf("\nTime elapsed for each step :\n");
         printf("   for source_generate : %f (%f %% of total time)\n", each_func[0], each_func[0] * 100 / total_time_func);
         printf("   for encoder_repetition_encode : %f (%f %% of total time)\n", each_func[1], each_func[1] * 100 / total_time_func);
