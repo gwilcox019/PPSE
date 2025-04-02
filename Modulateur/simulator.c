@@ -184,7 +184,7 @@ int main( int argc, char** argv) {
     if (filepath[0] == 0) file_stats = stdout;
     else file_stats = fopen(filepath, "w");
     fprintf(file, "Eb/No,Es/No,Sigma,# Bit Errors,# Frame Errors,# Simulated frames,BER,FER,Time for this SNR,Average time for one frame\n");
-    fprintf(file_stats, "Gen_avg,Gen_min,Gen_max,encode_avg,encode_min,encode_max,bpsk_avg,bpsk_min,bpsk_max,awgn_avg,awgn_min,awgn_max,demodulate_avg,demodulate_min_demodulate_max,decode_avg,decode_min,decode_max,monitor_avg,monitor_min,monitor_max");
+    fprintf(file_stats, "gen_avg,gen_min,gen_max,gen_percent,encode_avg,encode_min,encode_max,encode_percent,bpsk_avg,bpsk_min,bpsk_max,bpsk_percent,awgn_avg,awgn_min,awgn_max,awgn_percent,demodulate_avg,demodulate_min_demodulate_max,demodulate_percent,decode_avg,decode_min,decode_max,decode_percent,monitor_avg,monitor_min,monitor_max,monitor_percent");
     // Time computation
     clock_t start_time, end_time;
     clock_t begin_step, end_step;
@@ -339,14 +339,14 @@ int main( int argc, char** argv) {
             avg_time[i] = (float) avg_time[i]/n_frame_simulated;
         }
 
-        fprintf("%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f",
-            avg_time[0], min_time[0], max_time[0],
-            avg_time[1], min_time[1], max_time[1],
-            avg_time[2], min_time[2], max_time[2],
-            avg_time[3], min_time[3], max_time[3],
-            avg_time[4], min_time[4], max_time[4],
-            avg_time[5], min_time[5], max_time[5],
-            avg_time[6], min_time[6], max_time[6]);
+        fprintf("%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f",
+            avg_time[0], min_time[0], max_time[0], avg_time[0]/(total_time_func/n_frame_simulated) * 100,
+            avg_time[1], min_time[1], max_time[1], avg_time[1]/(total_time_func/n_frame_simulated) * 100,
+            avg_time[2], min_time[2], max_time[2], avg_time[2]/(total_time_func/n_frame_simulated) * 100,
+            avg_time[3], min_time[3], max_time[3], avg_time[3]/(total_time_func/n_frame_simulated) * 100,
+            avg_time[4], min_time[4], max_time[4], avg_time[4]/(total_time_func/n_frame_simulated) * 100,
+            avg_time[5], min_time[5], max_time[5], avg_time[5]/(total_time_func/n_frame_simulated) * 100,
+            avg_time[6], min_time[6], max_time[6], avg_time[6]/(total_time_func/n_frame_simulated) * 100 );
 
         // Writing in file
         fprintf(file, "%f, %f, %f, %li, %li, %li, %f, %f, %f, %f\n", 
