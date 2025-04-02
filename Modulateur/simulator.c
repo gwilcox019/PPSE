@@ -185,6 +185,7 @@ int main( int argc, char** argv) {
     clock_t begin_step, end_step;
     float elapsed=0;
     float average=0;
+    float throughput;
     float each_func[7] = {0};
     float total_time_func = 0;
     
@@ -206,6 +207,7 @@ int main( int argc, char** argv) {
 
         printf("min snr = %f, max snr = %f, current snr = %f, sigma = %f\n", min_SNR, max_SNR, val, sigma);
 
+        // simulate this snr until we reach desired number of errors
         do {
             begin_step = clock();
             source_generate(U_K, info_bits);
@@ -265,11 +267,12 @@ int main( int argc, char** argv) {
         } while (n_frame_errors < f_max);
 
         end_time = clock();
-        elapsed = (float) (end_time - start_time) / CLOCKS_PER_SEC;
+        elapsed = (float) (end_time - start_time) / CLOCKS_PER_SEC; // seconds
         average = elapsed / n_frame_simulated;
 
         fer = (float)n_frame_errors/n_frame_simulated;
         ber = (float)n_bit_errors / (n_frame_simulated * info_bits);
+        throughput = (float)n_frame_simulated * info_bits / elapsed / 1000000; // throughput in Mbps
 
         //Time stats display
         printf("\nTime elapsed for each step :\n");
