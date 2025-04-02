@@ -67,6 +67,10 @@ void module_bpsk_modulate (const uint8_t* CN, int32_t* XN, size_t n) {
         XN[n-1] = (CN[n-1]?-1:1);
 }
 
+void modem_BPSK_modulate_all_ones(const uint8_t *C_N, int32_t *X_N, size_t N) {
+    memset(X_N, 1, N);
+}
+
 // adds random noise following a normal distribution
 void channel_AGWN_add_noise(const int32_t* X_N, float* Y_N, size_t n, float sigma, gsl_rng * rangen) {
     for (; n>0; n--) {
@@ -137,10 +141,11 @@ int main( int argc, char** argv) {
     uint32_t codeword_size = 128;
     void  (*decoder_fn) (const float*, uint8_t *, size_t, size_t) = codec_repetition_soft_decode; *
     void (*generate_fn) (uint8_t, size_t) = source_generate;
+    void (*modulate_fn) (const uint8_t, int32_t, size_t) = module_bpsk_modulate;
     char filepath[11] = {0};
     char filepath_stats[17] = {0};
     // For long option - we set an alias
-    struct option zero_opt[2] = {{"src-all-zeros", no_argument, NULL, 'z'}, {0,0,0,0}};
+    struct option zero_opt[2] = {{"src-all-zeros", no_argument, NULL, 'z'}, {"mod-all-ones", no_argument, NULL, 'o'},{0,0,0,0}};
     int long_index=0;
     // We use getopt to parse command line arguments
     // An option is a parameter beginning with '-' (different from "-" and "--")
@@ -151,7 +156,7 @@ int main( int argc, char** argv) {
     // The following argument is then stored in optarg variable
     int opt;
     //Loops while something to read
-    while ((opt = getopt_long(argc, argv, "m:M:s:e:K:N:D:f:z", zero_opt, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "m:M:s:e:K:N:D:f:", zero_opt, &long_index)) != -1) {
         switch(opt) {
             case 'm': min_SNR = atof(optarg); break;
             case 'M': if ((max_SNR = atof(optarg)) == 0) max_SNR = 12; break;
@@ -166,6 +171,8 @@ int main( int argc, char** argv) {
             case 'z': //Check long
                 generate_fn = source_generate_all_zeros;
                 break;
+            case 'o': //check long
+                modulate_fn = modem_BPSK_modulate_all_ones; break;
         }
     }
 
