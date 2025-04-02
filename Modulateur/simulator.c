@@ -85,7 +85,7 @@ void modem_BPSK_demodulate (const float* Y_N, float* L_N, size_t n, float sigma)
 }
 
 // A FAIRE PAR GRACE
-void quantizer_transform8 (cost float* L_N, int8_t* L8_N, size_t N, size_t s, size_t f) {
+void quantizer_transform8 (const float* L_N, int8_t* L8_N, size_t N, size_t s, size_t f) {
 
 }
 
@@ -227,7 +227,7 @@ int main( int argc, char** argv) {
     float max_time[7] = {-1};
     float avg_time[7] = {0};
     float avg_thr[7] = {0};
-    int cycles = 0;
+    float cycles = 0;
     #endif
     
     //Init random
@@ -258,94 +258,101 @@ int main( int argc, char** argv) {
         do {
             // SOURCE GEN - create frame
             #ifdef ENABLE_STATS
-             begin_step = micros();
+             begin_step = clock();
             #endif
             generate_fn(U_K, info_bits);
             #ifdef ENABLE_STATS
-            end_step = micros(); 
-            avg_time[0] += (end_step-begin_step);
+            end_step = clock(); 
+            cycles = (end_step-begin_step*1000000)/CLOCKS_PER_SEC;
+            avg_time[0] += cycles;
 	    
-            min_time[0]  = ((min_time[0] == -1 || (end_step-begin_step) < min_time[0]) ? (end_step-begin_step) : min_time[0]);
-            max_time[0]  = ((max_time[0] == -1 || (end_step-begin_step) > max_time[0]) ? (end_step-begin_step) : max_time[0]);
-            total_time_func += (end_step-begin_step);
+            min_time[0]  = ((min_time[0] == -1 || cycles < min_time[0]) ? cycles : min_time[0]);
+            max_time[0]  = ((max_time[0] == -1 || cycles > max_time[0]) ? cycles : max_time[0]);
+            total_time_func += cycles;
             #endif
 
             // ENCODE - form codeword (repetitions)
             #ifdef ENABLE_STATS
-             begin_step = micros();
+             begin_step = clock();
             #endif
             encoder_repetition_encode(U_K,C_N,info_bits,n_reps);
             #ifdef ENABLE_STATS
-            end_step = micros(); 
-            avg_time[1] += (end_step-begin_step);
-            min_time[1]  = ((min_time[1] == -1 || (end_step-begin_step) < min_time[1]) ? (end_step-begin_step) : min_time[1]);
-            max_time[1]  = ((max_time[1] == -1 || (end_step-begin_step) > max_time[1]) ? (end_step-begin_step) : max_time[1]);
-            total_time_func += (end_step-begin_step);
+            end_step = clock(); 
+            cycles = (end_step-begin_step*1000000)/CLOCKS_PER_SEC;
+            avg_time[1] += cycles;
+            min_time[1]  = ((min_time[1] == -1 || cycles < min_time[1]) ? cycles : min_time[1]);
+            max_time[1]  = ((max_time[1] == -1 || cycles > max_time[1]) ? cycles : max_time[1]);
+            total_time_func += cycles;
             #endif
 
             // MODULATE - convert to symbol
             #ifdef ENABLE_STATS
-             begin_step = micros();
+             begin_step = clock();
             #endif
             modulate_fn(C_N, X_N, codeword_size);
             #ifdef ENABLE_STATS
-            end_step = micros(); 
-            avg_time[2] += (end_step-begin_step);
-            min_time[2]  = ((min_time[2] == -1 || (end_step-begin_step) < min_time[0]) ? (end_step-begin_step) : min_time[0]);
-            max_time[2]  = ((max_time[2] == -1 || (end_step-begin_step) > max_time[0]) ? (end_step-begin_step) : max_time[0]);
-            total_time_func += (end_step-begin_step);
+            end_step = clock(); 
+            cycles = (end_step-begin_step*1000000)/CLOCKS_PER_SEC;
+            avg_time[2] += cycles;
+            min_time[2]  = ((min_time[2] == -1 || cycles < min_time[0]) ? cycles : min_time[0]);
+            max_time[2]  = ((max_time[2] == -1 || cycles > max_time[0]) ? cycles : max_time[0]);
+            total_time_func += cycles;
             #endif
             
             // CHANNEL - add noise
             #ifdef ENABLE_STATS
-             begin_step = micros();
+             begin_step = clock();
             #endif
             channel_AGWN_add_noise(X_N, Y_N, codeword_size, sigma, rangen);
             #ifdef ENABLE_STATS
-            end_step = micros(); 
-            avg_time[3] += (end_step-begin_step);
-            min_time[3]  = ((min_time[3] == -1 || (end_step-begin_step) < min_time[0]) ? (end_step-begin_step) : min_time[0]);
-            max_time[3]  = ((max_time[3] == -1 || (end_step-begin_step) > max_time[0]) ? (end_step-begin_step) : max_time[0]);
-            total_time_func += (end_step-begin_step);
+            end_step = clock(); 
+            cycles = (end_step-begin_step*1000000)/CLOCKS_PER_SEC;
+            avg_time[3] += cycles;
+            min_time[3]  = ((min_time[3] == -1 || cycles < min_time[0]) ? cycles : min_time[0]);
+            max_time[3]  = ((max_time[3] == -1 || cycles > max_time[0]) ? cycles : max_time[0]);
+            total_time_func += cycles;
             #endif
 
             // DEMODULATE - receive from channel
             #ifdef ENABLE_STATS
-             begin_step = micros();
+             begin_step = clock();
             #endif
             modem_BPSK_demodulate(Y_N, L_N, codeword_size, sigma);
             #ifdef ENABLE_STATS
-            end_step = micros(); 
-            avg_time[4] += (end_step-begin_step);
-            min_time[4]  = ((min_time[4] == -1 || (end_step-begin_step) < min_time[0]) ? (end_step-begin_step) : min_time[0]);
-            max_time[4]  = ((max_time[4] == -1 || (end_step-begin_step) > max_time[0]) ? (end_step-begin_step) : max_time[0]);
-            total_time_func += (end_step-begin_step);
+            end_step = clock(); 
+            cycles = (end_step-begin_step*1000000)/CLOCKS_PER_SEC;
+            avg_time[4] += cycles;
+            min_time[4]  = ((min_time[4] == -1 || cycles < min_time[0]) ? cycles : min_time[0]);
+            max_time[4]  = ((max_time[4] == -1 || cycles > max_time[0]) ? cycles : max_time[0]);
+            total_time_func += cycles;
             #endif
 
             // DECODE - recover message 
             #ifdef ENABLE_STATS
-             begin_step = micros();
+             begin_step = clock();
             #endif
             decoder_fn ( L_N, V_K, info_bits, n_reps);
             #ifdef ENABLE_STATS
-            end_step = micros(); 
-            avg_time[5] += (end_step-begin_step);
-            min_time[5]  = ((min_time[5] == -1 || (end_step-begin_step) < min_time[0]) ? (end_step-begin_step) : min_time[0]);
-            max_time[5]  = ((max_time[5] == -1 || (end_step-begin_step) > max_time[0]) ? (end_step-begin_step) : max_time[0]);
-            total_time_func += (end_step-begin_step);
+            end_step = clock(); 
+            cycles = (end_step-begin_step*1000000)/CLOCKS_PER_SEC;
+            avg_time[5] += cycles;
+            min_time[5]  = ((min_time[5] == -1 || cycles < min_time[0]) ? cycles : min_time[0]);
+            max_time[5]  = ((max_time[5] == -1 || cycles > max_time[0]) ? cycles : max_time[0]);
+            total_time_func += cycles;
             #endif
 
             // MONITOR - error check
             #ifdef ENABLE_STATS
-             begin_step = micros();
+             begin_step = clock();
             #endif
             monitor_check_errors(U_K, V_K, info_bits, &n_bit_errors, &n_frame_errors);
             #ifdef ENABLE_STATS
-            end_step = micros(); 
-            avg_time[6] += (end_step-begin_step);
-            min_time[6]  = ((min_time[6] == -1 || (end_step-begin_step) < min_time[0]) ? (end_step-begin_step) : min_time[0]);
-            max_time[6]  = ((max_time[6] == -1 || (end_step-begin_step) > max_time[0]) ? (end_step-begin_step) : max_time[0]);
-            total_time_func += (end_step-begin_step);
+            end_step = clock(); 
+            cycles = (end_step-begin_step*1000000)/CLOCKS_PER_SEC;
+            avg_time[6] += cycles;
+            min_time[6]  = ((min_time[6] == -1 || cycles < min_time[0]) ? cycles : min_time[0]);
+            max_time[6]  = ((max_time[6] == -1 || cycles > max_time[0]) ? cycles : max_time[0]);
+            total_time_func += cycles;
             #endif
 
             n_frame_simulated++;
