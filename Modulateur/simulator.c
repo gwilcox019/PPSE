@@ -193,10 +193,12 @@ int main( int argc, char** argv) {
     float throughput;
 
     //Per-block statistics
+    #ifdef ENABLE_STATS
     float min_time[7] = {-1};
     float max_time[7] = {-1};
     float avg_time[7] = {0};
     float total_time_func = 0;
+    #endif
     
     //Init random
     srand(time(NULL));   // Initialization, should only be called once.
@@ -211,9 +213,11 @@ int main( int argc, char** argv) {
         n_frame_simulated = 0;
         total_time_func = 0;
         
+        #ifdef ENABLE_STATS
         memset(min_time, -1, 7);
         memset(max_time, -1, 7);
         memset(avg_time, 0, 7);
+        #endif
 
         SNR_better = val + 10*log10f(R); // have to use log10 not just log
         sigma = sqrt( 1 / (2 * pow(10, (SNR_better/10) ) ) ); 
@@ -335,6 +339,7 @@ int main( int argc, char** argv) {
         throughput = (float)n_frame_simulated * info_bits / elapsed / 1000000; // throughput in Mbps
 
         //Time stats display
+        #ifdef ENABLE_STATS
         for (int i=0; i<7, i++) {
             avg_time[i] = (float) avg_time[i]/n_frame_simulated;
         }
@@ -348,6 +353,8 @@ int main( int argc, char** argv) {
             avg_time[5], min_time[5], max_time[5], avg_time[5]/(total_time_func/n_frame_simulated) * 100,
             avg_time[6], min_time[6], max_time[6], avg_time[6]/(total_time_func/n_frame_simulated) * 100 );
 
+        #endif
+        
         // Writing in file
         fprintf(file, "%f, %f, %f, %li, %li, %li, %f, %f, %f, %f\n", 
             val, SNR_better, sigma,
