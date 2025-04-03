@@ -9,5 +9,8 @@
 # Concernant la modulation
 - les temps sont toujours en microseconds
 - le thoughput est équivalent , parce que changer la manière de moduler ne change pas la vitesse de traitement
+![thoughput](Task3/thoughput_sim2.jpg)
 - les performances de décodage sont largement réduites, puisqu'on fait totalement fi de l'entrée et on force une modulation vers 1. De manière logique, on a fait une mauvaise modulation sur environ la moitié des bits, donc on a un taux d'erreur de 1/2
-- Pour référence, on compare avec à la fois une génération de 0 et une modulation de 1
+![decode](Task3/decode_sim2.jpg)
+- Pour référence, on compare avec à la fois une génération de 0 et une modulation de 1. On constate alors qu'il n'y a aucun effet sur les performances de décodage (encore une fois, sauf pour la décision dure -> pourquoi?)
+![decode](Task3/decode_both_sim2.jpg)

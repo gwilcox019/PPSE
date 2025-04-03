@@ -8,10 +8,9 @@ import pandas
 
 ## Files = (namefile, legend, print format)
 ## with print format being first the dot style (x, +, . ...) and then the line style (usually - for continuous or -- for dashed)
-files = [("sim_5_zeros.csv", "Only zeros", "o-"),
-         ("sim_5_random.csv", "Random numbers", "x-"),
-         ("sim_5_ones.csv", "Only ones", "s-")]
-output = "decode_sim5"
+files = [("sim_1_zeros_both.csv", "Generated only zeros", "o-"),
+         ("Task3/sim_1_random.csv", "Generated random numbers", "x-")]
+output = "decode_both_sim1"
 xlabel = "Signal to Noise Ratio (EB/N0) (dB)"  
 ylabel = "Bit Error Rate"
 x = "Eb/No"
