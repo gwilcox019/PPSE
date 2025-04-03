@@ -8,14 +8,14 @@ import pandas
 
 ## Files = (namefile, legend, print format)
 ## with print format being first the dot style (x, +, . ...) and then the line style (usually - for continuous or -- for dashed)
-files = [("sim_5_zeroes.csv", "Only zeros", "o-"),
+files = [("sim_5_zeros.csv", "Only zeros", "o-"),
          ("sim_5_random.csv", "Random numbers", "x-"),
          ("sim_5_ones.csv", "Only ones", "s-")]
-output = "thoughput_sim5"
+output = "decode_sim5"
 xlabel = "Signal to Noise Ratio (EB/N0) (dB)"  
-ylabel = "Thoughput"
+ylabel = "Bit Error Rate"
 x = "Eb/No"
-y = " SNR throughput"
+y = "BER"
 
 for elem in files:
     sim = pandas.read_csv(elem[0])
