@@ -8,13 +8,12 @@ import pandas
 
 ## Files = (namefile, legend, print format)
 ## with print format being first the dot style (x, +, . ...) and then the line style (usually - for continuous or -- for dashed)
-files = [("sim_1_zeros_both.csv", "Generated only zeros", "o-"),
-         ("Task3/sim_1_random.csv", "Generated random numbers", "x-")]
-output = "decode_both_sim1"
+files = [("testsim_1_zeroes_stats.csv", "Random numbers", "x-")]
+output = "compare_sim1"
 xlabel = "Signal to Noise Ratio (EB/N0) (dB)"  
-ylabel = "Bit Error Rate"
-x = "Eb/No"
-y = "BER"
+ylabel = "Average generation time"
+x = "SNR"
+y = "gen_avg"
 
 for elem in files:
     sim = pandas.read_csv(elem[0])

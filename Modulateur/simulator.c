@@ -141,13 +141,23 @@ int main( int argc, char** argv) {
     uint32_t f_max = 100;
     uint32_t info_bits = 32;
     uint32_t codeword_size = 128;
-    void  (*decoder_fn) (const float*, uint8_t *, size_t, size_t) = codec_repetition_soft_decode;
+
+    char use_fixed = 0;
+    int f = 0;
+    int s = 0;
+
+    void  (*decoder_fn_float) (const float*, uint8_t *, size_t, size_t) = codec_repetition_soft_decode;
+    void  (*decoder_fn_fixed) (const int8_t*, uint8_t *, size_t, size_t) = codec_repetition_soft_decode8;
     void (*generate_fn) (uint8_t*, size_t) = source_generate;
     void (*modulate_fn) (const uint8_t*, int32_t*, size_t) = module_bpsk_modulate;
     char filepath[20] = {0};
     char filepath_stats[30] = {0};
     // For long option - we set an alias
-    struct option zero_opt[3] = {{"src-all-zeros", no_argument, NULL, 'z'}, {"mod-all-ones", no_argument, NULL, 'o'},{0,0,0,0}};
+    struct option zero_opt[3] = {{"src-all-zeros", no_argument, NULL, 'z'}, 
+                                {"mod-all-ones", no_argument, NULL, 'o'},
+                                {"qf", required_argument, NULL, 'g'},
+                                {"qs", required_argument, NULL, 'h'},
+                                {0,0,0,0}};
     int long_index=0;
     // We use getopt to parse command line arguments
     // An option is a parameter beginning with '-' (different from only "-" or starting with "--") 
@@ -167,7 +177,10 @@ int main( int argc, char** argv) {
             case 'K': if ((info_bits = atoi(optarg)) == 0) info_bits = 32; break;
             case 'N': if ((codeword_size = atoi(optarg)) == 0) codeword_size = 128; break;
             case 'D':
-                if (strcmp(optarg, "rep-hard") == 0) decoder_fn = codec_repetition_hard_decode;
+                if (strcmp(optarg, "rep-hard") == 0) {
+                    decoder_fn_float = codec_repetition_hard_decode;
+                    decoder_fn_fixed = codec_repetition_hard_decode8;
+                }
                 break;
             case 'f': sprintf(filepath, "sim_%s.csv", optarg); sprintf(filepath_stats, "sim_%s_stats.csv",optarg); break;
             case 'z': //Check long
@@ -175,8 +188,18 @@ int main( int argc, char** argv) {
                 break;
             case 'o': //check long
                 modulate_fn = modem_BPSK_modulate_all_ones; 
-		printf("changed modulate\n");
-		break;
+                break;
+            case 'g': //float
+                printf("DEBUG : qf called with argument %s\n", optarg);
+                use_float = 1;
+                f = atoi(optarg);
+                break;
+            case 'h':
+                printf("DEBUG : qs called with argument %s\n", optarg);
+                // Using qs should do nothing if we didn't call qf -- no use_float = 1 here
+                s = stoi(optarg);
+                break;
+
         }
     }
 
@@ -186,6 +209,7 @@ int main( int argc, char** argv) {
     int32_t X_N[codeword_size]; // Modulated message
     float Y_N[codeword_size];  // Received message after canal
     float L_N[codeword_size];  // Demodulated message
+    int8_t L8_N[codeword_size];  // Demodulated message
     uint8_t V_K[info_bits];// Decoded message
 
     uint64_t n_bit_errors, n_frame_errors, n_frame_simulated; // Frame and bit stats
@@ -330,7 +354,10 @@ int main( int argc, char** argv) {
             #ifdef ENABLE_STATS
              begin_step = clock();
             #endif
-            decoder_fn ( L_N, V_K, info_bits, n_reps);
+            if (use_fixed) {
+                quantizer_transform8(L_N, L8_N, codeword_size, s, f);                //Quantizer
+                decoder_fn_fixed(L8_N, V_K, info_bits, nreps);
+            } else decoder_fn_float ( L_N, V_K, info_bits, n_reps);
             #ifdef ENABLE_STATS
             end_step = clock(); 
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
