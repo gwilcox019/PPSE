@@ -143,8 +143,8 @@ int main( int argc, char** argv) {
     uint32_t codeword_size = 128;
 
     char use_fixed = 0;
-    int f = 0;
-    int s = 0;
+    int f = 8;
+    int s = 1;
 
     void  (*decoder_fn_float) (const float*, uint8_t *, size_t, size_t) = codec_repetition_soft_decode;
     void  (*decoder_fn_fixed) (const int8_t*, uint8_t *, size_t, size_t) = codec_repetition_soft_decode8;
@@ -178,7 +178,13 @@ int main( int argc, char** argv) {
             case 'N': if ((codeword_size = atoi(optarg)) == 0) codeword_size = 128; break;
             case 'D':
                 if (strcmp(optarg, "rep-hard") == 0) {
+                    use_fixed = 0;
                     decoder_fn_float = codec_repetition_hard_decode;
+                } else if (strcmp(optarg, "rep-hard8") == 0) {
+                    use_fixed = 1;
+                    decoder_fn_fixed = codec_repetition_hard_decode8;
+                } else if (strcmp(optarg, "rep-soft8") == 0) {
+                    use_fixed = 1;
                     decoder_fn_fixed = codec_repetition_hard_decode8;
                 }
                 break;
