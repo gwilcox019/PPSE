@@ -6,7 +6,7 @@
 # Quicker to execute and super fun !
 # Results will be stored in the file : "sim_<no>_<f>_<s>.csv"
 
-gcc simulator.c -o simulator.x -Wall -std=c99 -I/usr/include/gsl -lgsl -lgslcblas -lm
+gcc simulator.c -o simulator.x -Wall -std=c99 -I/usr/include/gsl -lgsl -lgslcblas -lm -DENABLE_STATS
 
 # Check usage
 if [ "$#" -ne 2 ]; then

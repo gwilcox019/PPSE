@@ -211,7 +211,7 @@ int main( int argc, char** argv) {
             case 'h':
                 printf("DEBUG : qs called with argument %s\n", optarg);
                 // Using qs should do nothing if we didn't call qf -- no use_float = 1 here
-                s = stoi(optarg);
+                s = atoi(optarg);
                 break;
 
         }
