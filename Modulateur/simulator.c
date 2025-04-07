@@ -12,6 +12,7 @@
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 #include <getopt.h>
+#include <arm_neon.h>
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
@@ -148,11 +149,18 @@ void codec_repetition_soft_decode (const float* L_N, uint8_t *V_N, size_t k, siz
 }
 
 void codec_repetition_hard_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t K, size_t n_reps) {
-    printf("Appel à hard neon\n");
 }
 
 void codec_repetition_soft_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t K, size_t n_reps) {
-    printf("Appel à soft neon\n");
+    float avg;
+    int8x16_t l8;
+    uint8x16_t v8;
+    for (int i=0; i<K; i=i+16) {
+        l8 = vld1q_s8(L8_N+i*4); // load next 16 ints from L8_N
+
+        if (avg < 0) V_N[i] = 1;
+        else V_N[i] = 0;
+    }
 }
 
 void monitor_check_errors (const uint8_t* U_K, const uint8_t *V_K, size_t k, uint64_t *n_bit_errors, uint64_t *n_frame_errors) {
