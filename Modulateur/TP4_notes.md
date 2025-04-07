@@ -14,3 +14,9 @@
 ![decode](Task3/decode_sim2.jpg)
 - Pour référence, on compare avec à la fois une génération de 0 et une modulation de 1. On constate alors qu'il n'y a aucun effet sur les performances de décodage (encore une fois, sauf pour la décision dure -> pourquoi?)
 ![decode](Task3/decode_both_sim2.jpg)
+
+# Task 5 
+## Sim 1
+S5F4
+
+-> s=8 on sature toujours
