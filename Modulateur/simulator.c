@@ -125,6 +125,14 @@ void codec_repetition_soft_decode (const float* L_N, uint8_t *V_N, size_t k, siz
     }
 }
 
+void codec_repetition_hard_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t K, size_t n_reps) {
+    printf("Appel à hard neon\n");
+}
+
+void codec_repetition_soft_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t K, size_t n_reps) {
+    printf("Appel à soft neon\n");
+}
+
 void monitor_check_errors (const uint8_t* U_K, const uint8_t *V_K, size_t k, uint64_t *n_bit_errors, uint64_t *n_frame_errors) {
     int flag = 0;
     for (int i=0; i<k; i++) {
@@ -194,7 +202,13 @@ int main( int argc, char** argv) {
                 } else if (strcmp(optarg, "rep-soft8") == 0) {
                     use_fixed = 1;
                     decoder_fn_fixed = codec_repetition_soft_decode8;
-                }
+                } else if (strcmp(optarg, "rep-hard8-neon") == 0) {
+                    use_fixed = 1;
+                    decoder_fn_fixed = codec_repetition_hard_decode8_neon;
+                } else if (strcmp(optarg, "rep-soft8-neon") == 0) {
+                    use_fixed = 1;
+                    decoder_fn_fixed = codec_repetition_soft_decode8_neon;
+                } 
                 break;
             case 'f': sprintf(filepath, "sim_%s.csv", optarg); sprintf(filepath_stats, "sim_%s_stats.csv",optarg); break;
             case 'z': //Check long
