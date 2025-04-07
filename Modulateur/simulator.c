@@ -161,7 +161,7 @@ int main( int argc, char** argv) {
     char filepath[20] = {0};
     char filepath_stats[30] = {0};
     // For long option - we set an alias
-    struct option zero_opt[3] = {{"src-all-zeros", no_argument, NULL, 'z'}, 
+    struct option zero_opt[5] = {{"src-all-zeros", no_argument, NULL, 'z'}, 
                                 {"mod-all-ones", no_argument, NULL, 'o'},
                                 {"qf", required_argument, NULL, 'g'},
                                 {"qs", required_argument, NULL, 'h'},
@@ -205,7 +205,7 @@ int main( int argc, char** argv) {
                 break;
             case 'g': //float
                 printf("DEBUG : qf called with argument %s\n", optarg);
-                use_float = 1;
+                use_fixed = 1;
                 f = atoi(optarg);
                 break;
             case 'h':
@@ -370,7 +370,7 @@ int main( int argc, char** argv) {
             #endif
             if (use_fixed) {
                 quantizer_transform8(L_N, L8_N, codeword_size, s, f);                //Quantizer
-                decoder_fn_fixed(L8_N, V_K, info_bits, nreps);
+                decoder_fn_fixed(L8_N, V_K, info_bits, n_reps);
             } else decoder_fn_float ( L_N, V_K, info_bits, n_reps);
             #ifdef ENABLE_STATS
             end_step = clock(); 
