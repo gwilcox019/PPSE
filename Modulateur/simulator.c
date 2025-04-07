@@ -88,7 +88,15 @@ void modem_BPSK_demodulate (const float* Y_N, float* L_N, size_t n, float sigma)
 
 // A FAIRE PAR GRACE
 void quantizer_transform8 (const float* L_N, int8_t* L8_N, size_t N, size_t s, size_t f) {
+    printf("Call to quantizer_transform8");
+}
 
+void codec_repetition_hard_decode8(const int8_t *L8_N, uint8_t *V_K, size_t K, size_t n_reps) {
+    printf("Call to codec_repetition_hard_decode8");
+}
+
+void codec_repetition_soft_decode8(const int8_t *L8_N, uint8_t *V_K, size_t K, size_t n_reps) {
+    printf("Call to codec_repetition_soft_decode8");
 }
 
 void codec_repetition_hard_decode (const float* L_N, uint8_t* V_N, size_t k, size_t n_reps) {
@@ -237,7 +245,7 @@ int main( int argc, char** argv) {
     FILE* file_stats;
     if (filepath_stats[0] == 0) file_stats = stdout;
     else file_stats = fopen(filepath_stats, "w");
-    fprintf(file, "Eb/No,Es/No,Sigma,# Bit Errors,# Frame Errors,# Simulated frames,BER,FER,Time for this SNR,Average time for one frame, SNR throughput\n");
+    fprintf(file, "Eb/No,Es/No,Sigma,# Bit Errors,# Frame Errors,# Simulated frames,BER,FER,Time for this SNR,Average time for one frame,SNR throughput\n");
     fprintf(file_stats, "Eb/No,gen_avg,gen_min,gen_max,gen_thr,gen_percent,encode_avg,encode_min,encode_max,encode_thr,encode_percent,bpsk_avg,bpsk_min,bpsk_max,bpsk_thr,bpsk_percent,awgn_avg,awgn_min,awgn_max,awgn_thr,awgn_percent,demodulate_avg,demodulate_min_demodulate_max,demodulate_thr,demodulate_percent,decode_avg,decode_min,decode_max,decode_thr,decode_percent,monitor_avg,monitor_min,monitor_max,monitor_thr,monitor_percent\n");
     // Time computation
     clock_t start_time, end_time; // total SNR sim time
