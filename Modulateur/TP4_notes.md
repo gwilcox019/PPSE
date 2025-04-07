@@ -21,7 +21,13 @@ S5F4
 
 -> s=8 on sature toujours
 
-## Sim2 & Sim4 & sim5
+## Sim2
 S5F2
 
-On constate qu'on a pas de perte quand on quantisize même sans répétitions (les 3 dernières courbes sont superposées).
+## Sim 3 & 4
+S5F3
+
+## Sim 5
+S5F4
+
+
