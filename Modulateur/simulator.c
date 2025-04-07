@@ -193,7 +193,7 @@ int main( int argc, char** argv) {
                     decoder_fn_fixed = codec_repetition_hard_decode8;
                 } else if (strcmp(optarg, "rep-soft8") == 0) {
                     use_fixed = 1;
-                    decoder_fn_fixed = codec_repetition_hard_decode8;
+                    decoder_fn_fixed = codec_repetition_soft_decode8;
                 }
                 break;
             case 'f': sprintf(filepath, "sim_%s.csv", optarg); sprintf(filepath_stats, "sim_%s_stats.csv",optarg); break;
