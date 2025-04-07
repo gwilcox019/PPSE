@@ -13,6 +13,9 @@
 #include <gsl/gsl_randist.h>
 #include <getopt.h>
 
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
+
 
 // gcc simulator.c -o simulator.x -Wall -std=c99 -I/usr/include/gsl -lgsl -lgslcblas -lm
 // (change I flag for where gsl is on the machine)
@@ -86,17 +89,36 @@ void modem_BPSK_demodulate (const float* Y_N, float* L_N, size_t n, float sigma)
         memcpy (L_N, Y_N, n*sizeof(float));
 }
 
-// A FAIRE PAR GRACE
+// transform to fixed point
 void quantizer_transform8 (const float* L_N, int8_t* L8_N, size_t N, size_t s, size_t f) {
-    printf("Call to quantizer_transform8");
+    int8_t range = pow(2,s-1);
+    int8_t frange = pow(2,f);
+    for (int i = 0; i<N; i++) {
+        L8_N[i] = MIN(MAX(round(frange*L_N[i]),-range),range-1);
+    }
 }
 
 void codec_repetition_hard_decode8(const int8_t *L8_N, uint8_t *V_K, size_t K, size_t n_reps) {
-    printf("Call to codec_repetition_hard_decode8");
+    int average = 0;
+    for (int i=0; i<K; i++) {
+        average = 0;
+	    for (int j= 0; j<n_reps; j++) {
+            average += (L8_N[i+j*K] < 0 ? -1  : 1) ;
+        }
+        V_K[i] = (average<0?1:0);
+    }
 }
 
 void codec_repetition_soft_decode8(const int8_t *L8_N, uint8_t *V_K, size_t K, size_t n_reps) {
-    printf("Call to codec_repetition_soft_decode8");
+    int8_t avg;
+    for (int i=0; i<K; i++) {
+        avg = 0;
+        for (int j=0; j<n_reps; j++) {
+            avg += L8_N[j*K+i];
+        }
+        if (avg < 0) V_K[i] = 1;
+        else V_K[i] = 0;
+    }
 }
 
 void codec_repetition_hard_decode (const float* L_N, uint8_t* V_N, size_t k, size_t n_reps) {
