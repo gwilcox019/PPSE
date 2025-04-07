@@ -20,3 +20,14 @@
 S5F4
 
 -> s=8 on sature toujours
+
+## Sim2
+S5F2
+
+## Sim 3 & 4
+S5F3
+
+## Sim 5
+S5F4
+
+
