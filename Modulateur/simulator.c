@@ -186,14 +186,11 @@ void codec_repetition_hard_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t
 }
 
 void codec_repetition_soft_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t K, size_t n_reps) {
-    float avg;
-    int8x16_t l8;
-    uint8x16_t v8;
+    int8x16_t l8, avg;
+    avg = vdupq_n_s8(0); // initialize zeros
     for (int i=0; i<K; i=i+16) {
-        l8 = vld1q_s8(L8_N+i*4); // load next 16 ints from L8_N
-
-        if (avg < 0) V_N[i] = 1;
-        else V_N[i] = 0;
+        l8 = vld1q_s8(L8_N+i); // load next 16 ints from L8_N
+        
     }
 }
 
