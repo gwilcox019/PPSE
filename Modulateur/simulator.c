@@ -155,23 +155,23 @@ void codec_repetition_hard_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t
     int8x16_t decomposed; //Stores the raw data that we are working on
     int8x16_t sum; //Stores the local sum for that part of the array
     int8x16_t minus1 = vdupq_n_s8(-1);
+    int8x16_t only1 = vdupq_n_s8(1);
+    int8x16_t only2 = vdupq_n_s8(2);
     for (int a=0; a<array_nb; a++) { //Pour chaque groupe de 16 valeurs (taille de K)
         for (int r=0; r<n_reps; r++) { //Pour chacune des répétitions
             //Préparation de la partie a
             decomposed = vld1q_s8(L8_N + (r*n_reps + a));
-            decomposed = vcltzq_s8(decomposed); //below 0 -> 1 / above 0 -> 0
-            decomposed = vaddq_s8 (decomposed, decomposed); //On récupère des 0 et des 2
-            decomposed = vaddq_s8 (decomposed, minus1); //On récupère -1 si on avait plus de 0 et +1 si on avait moins de 0
+            decomposed = vcltzq_s8(decomposed); //below 0 -> -1 / above 0 -> 0
+            decomposed = vaddq_s8 (decomposed, decomposed); //On récupère des 0 (above 0) et des -2 (below 0)
+            decomposed = vaddq_s8 (decomposed, only1); //On récupère -1 si on avait moins de 0 et +1 si on avait plus de 0
 
             // Addition des vecteurs pour avoir la moyenne
             sum = vaddq_s8(decomposed, sum);
         }
 
         //Décision à partir de la moyenne
-        sum = vcltzq_s8(sum); //On récupère 0 si on avait + que 0, 1 si on avait - que 0 : inverse de ce qu'on veut
-        sum = vaddq_s8 (sum, minus1); // On a -1 si on avait + que 0 et 0 si on avait - que 0
-        sum = vcltzq_s8(sum); //On récupère 1 si on avait + que 0, 0 si on avait - que 0 : normalement c'est bon
-
+        sum = vcltzq_s8(sum); //On récupère 0 si on avait + que 0 à la somme, -1 si on avait - que 0
+        sum = vandq_s8 (sum, only1); // On a 1 si la somme était négative et 0 si la somme était positive
 
         //Stockage du résultat
         V_K+(a*16) = vst1q_s8(sum);
