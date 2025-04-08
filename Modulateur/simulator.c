@@ -152,36 +152,29 @@ void codec_repetition_hard_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t
     // truc intermédiaire pour charger la valeur
     int array_nb = K/16;
 
-    //Matrix : 
-    //Lines: 1 line contains 1 repetition
-    // 1 column contains one part of the array
-    //Ex. If K is 2*16, and n_reps is 4, we'll have decomposed[4][2]
-    int8x16_t decomposed[n_reps][array_nb];
-    int8x16_t sum[array_nb];
-    int8x16_t plus1 = vdupq_n_s8(1);
-    int8x16_t only2 = vdupq_n_s8(2);
+    int8x16_t decomposed; //Stores the raw data that we are working on
+    int8x16_t sum; //Stores the local sum for that part of the array
     int8x16_t minus1 = vdupq_n_s8(-1);
-    for (int a=0; a<array_nb; a++) {
-        for (int r=0; r<n_reps; r++) { 
+    int8x16_t only1 = vdupq_n_s8(1);
+    int8x16_t only2 = vdupq_n_s8(2);
+    for (int a=0; a<array_nb; a++) { //Pour chaque groupe de 16 valeurs (taille de K)
+        for (int r=0; r<n_reps; r++) { //Pour chacune des répétitions
             //Préparation de la partie a
-            decomposed[r][a] = vld1q_s8(L8_N + (r*n_reps + a));
-            decomposed[r][a] = vcltzq_s8(decomposed[r][a]); //below 0 -> 1 / above 0 -> 0
-            decomposed[r][a] = vaddq_s8 (decomposed[r][a], plus1); //On récupère des 1 et des 2
-            decomposed[r][a] = vandq_s8 (decomposed[r][a], only2); //On remet les 1 à 0, les 2 reste des 2
-            decomposed[r][a] = vaddq_s8 (decomposed[r][a], minus1); //On récupère -1 si on avait plus de 0 et +1 si on avait moins de 0
+            decomposed = vld1q_s8(L8_N + (r*n_reps + a));
+            decomposed = vcltzq_s8(decomposed); //below 0 -> -1 / above 0 -> 0
+            decomposed = vaddq_s8 (decomposed, decomposed); //On récupère des 0 (above 0) et des -2 (below 0)
+            decomposed = vaddq_s8 (decomposed, only1); //On récupère -1 si on avait moins de 0 et +1 si on avait plus de 0
 
             // Addition des vecteurs pour avoir la moyenne
-            sum[a] = vaddq_s8(decomposed[r][a], sum[a]);
+            sum = vaddq_s8(decomposed, sum);
         }
 
         //Décision à partir de la moyenne
-        sum[a] = vcltzq_s8(sum[a]); //On récupère 0 si on avait + que 0, 1 si on avait - que 0 : inverse de ce qu'on veut
-        sum[a] = vaddq_s8 (sum[a], plus1); //On récupère des 1 et des 2
-        sum[a] = vandq_s8 (sum[a], only2); //On remet les 1 à 0, les 2 reste des 2
-        sum[a] = vaddq_s8 (sum[a], minus1);
+        sum = vcltzq_s8(sum); //On récupère 0 si on avait + que 0 à la somme, -1 si on avait - que 0
+        sum = vandq_s8 (sum, only1); // On a 1 si la somme était négative et 0 si la somme était positive
 
         //Stockage du résultat
-        V_K+(a*16) = vst1q_s8(sum[a]);
+        V_K+(a*16) = vst1q_s8(sum);
     }    
 }
 
