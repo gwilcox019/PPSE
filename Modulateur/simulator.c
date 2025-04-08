@@ -29,6 +29,13 @@ void print_array (uint8_t* array, size_t size) {
     }
     printf("]");
 }
+void print_array8 (int8_t* array, size_t size) {
+    printf("[");
+    for (int i=0; i<size; i++) {
+        printf("%d ; ", array[i]);
+    }
+    printf("]");
+}
 void print_array_32 (int32_t* array, size_t size) {
     printf("[");
     for (int i=0; i<size; i++) {
@@ -154,9 +161,7 @@ void codec_repetition_hard_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t
 
     int8x16_t decomposed; //Stores the raw data that we are working on
     int8x16_t sum; //Stores the local sum for that part of the array
-    int8x16_t minus1 = vdupq_n_s8(-1);
     int8x16_t only1 = vdupq_n_s8(1);
-    int8x16_t only2 = vdupq_n_s8(2);
     for (int a=0; a<array_nb; a++) { //Pour chaque groupe de 16 valeurs (taille de K)
         for (int r=0; r<n_reps; r++) { //Pour chacune des répétitions
             //Préparation de la partie a
@@ -166,7 +171,7 @@ void codec_repetition_hard_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t
             decomposed = vaddq_s8 (decomposed, only1); //On récupère -1 si on avait moins de 0 et +1 si on avait plus de 0
 
             // Addition des vecteurs pour avoir la moyenne
-            sum = vaddq_s8(decomposed, sum);
+            sum = vqaddq_s8(decomposed, sum);
         }
 
         //Décision à partir de la moyenne
@@ -174,17 +179,35 @@ void codec_repetition_hard_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t
         sum = vandq_s8 (sum, only1); // On a 1 si la somme était négative et 0 si la somme était positive
 
         //Stockage du résultat
-        V_K+(a*16) = vst1q_s8(sum);
+        vst1q_s8((int8_t*)V_K+(a*16), sum);
     }    
 }
 
 void codec_repetition_soft_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t K, size_t n_reps) {
-    int8x16_t l8, avg;
-    avg = vdupq_n_s8(0); // initialize zeros
-    for (int i=0; i<K; i=i+16) {
-        l8 = vld1q_s8(L8_N+i); // load next 16 ints from L8_N
-        
+    printf("SIMD soft decode starting : ");
+    print_array8(L8_N, K*n_reps);
+    printf("\n");
+    // K = message size, always multiple of 16
+    int k16 = K/16; // number of 16-wide chunks in message
+    int cw = 0; // number of 16-wide chunks already treated
+    int8x16_t l8;
+    int8x16_t avg[k16];
+    for (int i=0; i<k16; i++) avg[i] = vdupq_n_s8(0); // initialize zeros
+    // calc avg 
+    for (int n=0; n<n_reps; n++) {
+        cw = n*k16;
+        for (int i=0; i<k16; i++) {
+            l8 = vld1q_s8(L8_N + cw + i*16); // load next 16 ints from L8_N
+            avg[i] = vqaddq_s8(l8, avg[i]); // add to avg
+        }
     }
+    for (int i=0; i<k16; i++) {
+        avg[i] = vcltzq_s8(avg[i]); // check avg < 0 
+        vst1q_s8((int8_t*)V_K+i*16, avg[i]);
+    }
+    printf("SIMD soft decode result : ");
+    print_array(V_K, K);
+    printf("\n");
 }
 
 void monitor_check_errors (const uint8_t* U_K, const uint8_t *V_K, size_t k, uint64_t *n_bit_errors, uint64_t *n_frame_errors) {
