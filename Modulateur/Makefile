@@ -6,7 +6,7 @@ CFLAGS=-Wall -std=c99 -I/opt/homebrew/opt/gsl/include -L/opt/homebrew/opt/gsl/li
 
 all: simulator
 
-$@: $@.c
+$@.x: $@.c
 
 clean:
-	rm *.o
+	rm *.x

@@ -43,13 +43,26 @@ void print_array_32 (int32_t* array, size_t size) {
     }
     printf("]");
 }
-
 void print_array_float (float* array, size_t size) {
     printf("[");
     for (int i=0; i<size; i++) {
         printf("%f ; ", array[i]);
     }
     printf("]\n");
+}
+void display_uint8x16 (uint8x16_t vector) {
+    uint8_t T[16];
+    vst1q_u8(T, vector);
+    for (int i=0; i<16; i++) {
+        printf("%i ; ", T[i]);
+    }
+}
+void display_int8x16 (int8x16_t vector) {
+    int8_t T[16];
+    vst1q_u8(T, vector);
+    for (int i=0; i<16; i++) {
+        printf("%i ; ", T[i]);
+    }
 }
 
 // generates random frame of k bits
@@ -127,6 +140,9 @@ void codec_repetition_soft_decode8(const int8_t *L8_N, uint8_t *V_K, size_t K, s
         if (avg < 0) V_K[i] = 1;
         else V_K[i] = 0;
     }
+    printf("soft decode result w fixed point: ");
+    print_array(V_K, K);
+    printf("\n");
 }
 
 void codec_repetition_hard_decode (const float* L_N, uint8_t* V_N, size_t k, size_t n_reps) {
@@ -153,6 +169,9 @@ void codec_repetition_soft_decode (const float* L_N, uint8_t *V_N, size_t k, siz
         if (avg < 0) V_N[i] = 1;
         else V_N[i] = 0;
     }
+    printf("soft decode result NORMAL: ");
+    print_array(V_N, k);
+    printf("\n");
 }
 
 void codec_repetition_hard_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t K, size_t n_reps) {
@@ -198,11 +217,19 @@ void codec_repetition_soft_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t
         cw = n*k16;
         for (int i=0; i<k16; i++) {
             l8 = vld1q_s8(L8_N + cw + i*16); // load next 16 ints from L8_N
+            printf("value loaded : ");
+            display_int8x16(l8);
+            printf("\n");
             avg[i] = vqaddq_s8(l8, avg[i]); // add to avg
         }
     }
+    printf("avg calculated : ");
+    for (int i=0; i<k16; i++) display_int8x16(avg[i]);
+    printf("\n");
+    
+    int8x16_t one = vdupq_n_s8(1);
     for (int i=0; i<k16; i++) {
-        avg[i] = vcltzq_s8(avg[i]); // check avg < 0 
+        avg[i] = vandq_s8(vcltzq_s8(avg[i]), one); // check avg < 0, use bit mask bc true result = 0xFFFF_FFFF
         vst1q_s8((int8_t*)V_K+i*16, avg[i]);
     }
     printf("SIMD soft decode result : ");
@@ -225,7 +252,7 @@ void monitor_check_errors (const uint8_t* U_K, const uint8_t *V_K, size_t k, uin
 
 
 
-int main( int argc, char** argv) {
+int main1( int argc, char** argv) {
     
     // simulation parameters
     float min_SNR = 0;
@@ -525,5 +552,76 @@ int main( int argc, char** argv) {
 	fflush(file);
     }
     gsl_rng_free (rangen);
+    return 0;
+}
+
+int main() {
+
+    //Init random
+    srand(time(NULL));   // Initialization, should only be called once.
+    const gsl_rng_type * rangentype;
+    rangentype = gsl_rng_default;
+    gsl_rng * rangen = gsl_rng_alloc (rangentype); // random number gen w uniform distr 
+
+    size_t K = 32, N = 64, REPS = 2;
+    uint8_t UK[N], CN[N];
+    int32_t XN[N];
+    float YN[N], LN[N];
+    int8_t L8N[N];
+    uint8_t VN[K];
+
+    for (int i = 0; i < 1; i++)
+    {
+        // float sigma=0;
+        //  Generate message
+        source_generate(UK, K);
+        printf("\nTableau genere : ");
+        print_array(UK, K);
+
+        // Encoded message
+        encoder_repetition_encode(UK, CN, K, REPS);
+        printf("\nTableau encode : ");
+        print_array(CN, N);
+
+        // Modulated message
+        module_bpsk_modulate(CN, XN, N);
+        printf("\nTableau module : ");
+        print_array_32(XN, N);
+        printf("\n__________\n");
+
+        // Canal message
+        channel_AGWN_add_noise(XN, YN, N, 0.1, rangen);
+        printf("Tableau transmis : \n");
+        print_array_float(YN, N);
+        printf("\n");
+
+        // Demodulated message
+        modem_BPSK_demodulate(YN, LN, N, 0.1);
+        printf("Tableau demodule : \n");
+        print_array_float(LN, N);
+        printf("\n");
+
+        // convert to fixed point
+        quantizer_transform8(LN, L8N, N, 5, 3);
+
+        printf("Tableau hard dec : \n");
+        codec_repetition_hard_decode8_neon(L8N, VN, K, REPS);
+        printf("\n");
+
+        printf("Tableau soft dec NORMAL: \n");
+        codec_repetition_soft_decode(LN, VN, K, REPS);
+        printf("\n");
+
+        printf("Tableau soft dec w SIMD: \n");
+        codec_repetition_soft_decode8_neon(L8N, VN, K, REPS);
+        printf("\n");
+
+        printf("Tableau soft dec no SIMD: \n");
+        codec_repetition_soft_decode8(L8N, VN, K, REPS);
+        printf("\n");
+
+    }
+
+    gsl_rng_free(rangen);
     return 0;
 }
