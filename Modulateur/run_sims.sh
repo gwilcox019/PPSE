@@ -4,27 +4,21 @@
 # ./run_sims.sh <f-parameter> <s-parameter>
 # This script will automatically run the 5 sims in background at the same time with the inputted parameters
 # Quicker to execute and super fun !
-# Results will be stored in the file : "sim_<no>_<f>_<s>.csv"
 
 gcc simulator.c -o simulator.x -Wall -std=c99 -I/usr/include/gsl -lgsl -lgslcblas -lm -DENABLE_STATS
 
 # Check usage
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <f> <s>"
-    exit 1
-fi
+# if [ "$#" -ne 2 ]; then
+#     echo "Usage: $0 <f> <s>"
+#     exit 1
+# fi
 
-# Task1
-./simulator.x -m 0 -M 10 -s 1 -e 100 -K 32 -N 128 -D "rep-hard8" -f "1_$1_$2" --qf $1 --qs $2 &
+# Hard
+./simulator.x -m 0 -M 14 -s 1 -e 100 --generate-all-zeros --mod-all-ones -K 32 -N 8192 -D "rep-hard" -f "hard" &
+./simulator.x -m 0 -M 14 -s 1 -e 100 --generate-all-zeros --mod-all-ones -K 32 -N 8192 -D "rep-hard8" -f "hard8" --qf 4 --qs 5 &
+./simulator.x -m 0 -M 14 -s 1 -e 100 --generate-all-zeros --mod-all-ones -K 32 -N 8192 -D "rep-hard8-neon" -f "hard_neon" --qf 4 --qs 5 &
 
-# Task 2
-./simulator.x -m 0 -M  9 -s 1 -e 100 -K 32 -N 128 -D "rep-soft8" -f "2_$1_$2" --qf $1 --qs $2 &
-
-# Task 3
-./simulator.x -m 0 -M  9 -s 1 -e 100 -K 32 -N  96 -D "rep-soft8" -f "3_$1_$2" --qf $1 --qs $2 &
-
-# Task 4
-./simulator.x -m 0 -M  9 -s 1 -e 100 -K 32 -N  64 -D "rep-soft8" -f "4_$1_$2" --qf $1 --qs $2 &
-
-# Task 5
-./simulator.x -m 0 -M  9 -s 1 -e 100 -K 32 -N  32 -D "rep-soft8" -f "5_$1_$2" --qf $1 --qs $2 &
+# Soft
+./simulator.x -m 0 -M 11 -s 1 -e 100 --generate-all-zeros --mod-all-ones -K 32 -N 8192 -D "rep-soft" -f "soft" &
+./simulator.x -m 0 -M 11 -s 1 -e 100 --generate-all-zeros --mod-all-ones -K 32 -N 8192 -D "rep-soft8" -f "soft8" --qf 2 --qs 5 &
+./simulator.x -m 0 -M 11 -s 1 -e 100 --generate-all-zeros --mod-all-ones -K 32 -N 8192 -D "rep-soft8-neon" -f "soft_neon" --qf 2 --qs 5 &

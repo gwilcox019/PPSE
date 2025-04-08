@@ -8,17 +8,12 @@ import pandas
 
 ## Files = (namefile, legend, print format)
 ## with print format being first the dot style (x, +, . ...) and then the line style (usually - for continuous or -- for dashed)
-files = [("TP3/sim_2.csv", "Float - R = 1/4", "x-"),
-         ("TP3/sim_3.csv", "Float - R = 1/3", "s-"),
-         ("TP3/sim_4.csv", "Float - R = 1/2", "p-"),
-         ("TP3/sim_5.csv", "Float - R = 1", ".-"),
-         ("sim_2_2_5.csv", "Fixed - R = 1/4", "x-"),
-         ("sim_3_3_5.csv", "Fixed - R = 1/3", "s-"),
-         ("sim_4_4_5.csv", "Fixed - R = 1/2", "p-"),
-         ("sim_5_4_5.csv", "Fixed - R = 1", ".-")
+files = [("sim_hard.csv", "Float", "p-"),
+         ("sim_hard8.csv", "Fixed", "s-"),
+         ("sim_hard_neon.csv", "Neon", "x-")
 ]
 
-output = "graph2"
+output = "hard_comp"
 xlabel = "Signal to Noise Ratio (Eb/N0) (dB)"  
 ylabel = "Frame Error Rate"
 x = "Eb/No"
