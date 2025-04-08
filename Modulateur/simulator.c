@@ -17,7 +17,6 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
-
 // gcc simulator.c -o simulator.x -Wall -std=c99 -I/usr/include/gsl -lgsl -lgslcblas -lm
 // (change I flag for where gsl is on the machine)
 
@@ -130,12 +129,20 @@ void codec_repetition_hard_decode8(const int8_t *L8_N, uint8_t *V_K, size_t K, s
     }
 }
 
+// for detecting overflow
+int8_t sat_int_add(int8_t a, int8_t b) {
+    int8_t c = a+b;
+    if (a<0 && b<0) return c<0 ? c : 0x80;
+    if (a>0 && b>0) return c>0 ? c : 0x7F;
+    return c;
+}
+
 void codec_repetition_soft_decode8(const int8_t *L8_N, uint8_t *V_K, size_t K, size_t n_reps) {
     int8_t avg;
     for (int i=0; i<K; i++) {
         avg = 0;
         for (int j=0; j<n_reps; j++) {
-            avg += L8_N[j*K+i];
+            avg = sat_int_add(avg, L8_N[j*K+i]);
         }
         if (avg < 0) V_K[i] = 1;
         else V_K[i] = 0;
@@ -208,19 +215,19 @@ void codec_repetition_soft_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t
     printf("\n");
     // K = message size, always multiple of 16
     int k16 = K/16; // number of 16-wide chunks in message
-    int cw = 0; // number of 16-wide chunks already treated
-    int8x16_t l8;
-    int8x16_t avg[k16];
+    int cw; // number of 16-wide chunks already treated
+    int8x16_t l8; // temp vector for loading array
+    int8x16_t avg[k16]; // avg vectors
     for (int i=0; i<k16; i++) avg[i] = vdupq_n_s8(0); // initialize zeros
     // calc avg 
     for (int n=0; n<n_reps; n++) {
-        cw = n*k16;
+        cw = n*16*k16;
         for (int i=0; i<k16; i++) {
             l8 = vld1q_s8(L8_N + cw + i*16); // load next 16 ints from L8_N
             printf("value loaded : ");
             display_int8x16(l8);
             printf("\n");
-            avg[i] = vqaddq_s8(l8, avg[i]); // add to avg
+            avg[i] = vqaddq_s8(l8, avg[i]); // cumulative avg
         }
     }
     printf("avg calculated : ");
@@ -230,7 +237,7 @@ void codec_repetition_soft_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t
     int8x16_t one = vdupq_n_s8(1);
     for (int i=0; i<k16; i++) {
         avg[i] = vandq_s8(vcltzq_s8(avg[i]), one); // check avg < 0, use bit mask bc true result = 0xFFFF_FFFF
-        vst1q_s8((int8_t*)V_K+i*16, avg[i]);
+        vst1q_s8((int8_t*)V_K+i*16, avg[i]); // save result
     }
     printf("SIMD soft decode result : ");
     print_array(V_K, K);
@@ -563,7 +570,7 @@ int main() {
     rangentype = gsl_rng_default;
     gsl_rng * rangen = gsl_rng_alloc (rangentype); // random number gen w uniform distr 
 
-    size_t K = 32, N = 64, REPS = 2;
+    size_t K = 32, N = 8192, REPS = 256;
     uint8_t UK[N], CN[N];
     int32_t XN[N];
     float YN[N], LN[N];
@@ -580,26 +587,26 @@ int main() {
 
         // Encoded message
         encoder_repetition_encode(UK, CN, K, REPS);
-        printf("\nTableau encode : ");
-        print_array(CN, N);
+        //printf("\nTableau encode : ");
+        //print_array(CN, N);
 
         // Modulated message
         module_bpsk_modulate(CN, XN, N);
-        printf("\nTableau module : ");
-        print_array_32(XN, N);
-        printf("\n__________\n");
+        //printf("\nTableau module : ");
+        //print_array_32(XN, N);
+        //printf("\n__________\n");
 
         // Canal message
         channel_AGWN_add_noise(XN, YN, N, 0.1, rangen);
-        printf("Tableau transmis : \n");
-        print_array_float(YN, N);
-        printf("\n");
+        // printf("Tableau transmis : \n");
+        // print_array_float(YN, N);
+        // printf("\n");
 
         // Demodulated message
         modem_BPSK_demodulate(YN, LN, N, 0.1);
-        printf("Tableau demodule : \n");
-        print_array_float(LN, N);
-        printf("\n");
+        // printf("Tableau demodule : \n");
+        // print_array_float(LN, N);
+        // printf("\n");
 
         // convert to fixed point
         quantizer_transform8(LN, L8N, N, 5, 3);
@@ -612,9 +619,9 @@ int main() {
         codec_repetition_soft_decode(LN, VN, K, REPS);
         printf("\n");
 
-        printf("Tableau soft dec w SIMD: \n");
-        codec_repetition_soft_decode8_neon(L8N, VN, K, REPS);
-        printf("\n");
+        // printf("Tableau soft dec w SIMD: \n");
+        // codec_repetition_soft_decode8_neon(L8N, VN, K, REPS);
+        // printf("\n");
 
         printf("Tableau soft dec no SIMD: \n");
         codec_repetition_soft_decode8(L8N, VN, K, REPS);
