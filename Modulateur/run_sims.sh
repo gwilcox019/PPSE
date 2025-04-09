@@ -21,6 +21,6 @@ gcc simulator.c -o simulator.x -Wall -std=c99 -I/usr/include/gsl -lgsl -lgslcbla
 
 # Soft
 ./simulator.x -m 0 -M 11 -s 1 -e 100 --src-all-zeros --mod-all-ones -K 32 -N 8192 -D "rep-soft" -f "soft" &
-./simulator.x -m 0 -M 11 -s 1 -e 100 --src-all-zeros --mod-all-ones -K 32 -N 8192 -D "rep-soft8" -f "soft8" --qf 2 --qs 5 &
-./simulator.x -m 0 -M 11 -s 1 -e 100 --src-all-zeros --mod-all-ones -K 32 -N 8192 -D "rep-soft8-neon" -f "soft_neon" --qf 2 --qs 5 &
+./simulator.x -m 0 -M 11 -s 1 -e 100 --src-all-zeros --mod-all-ones -K 32 -N 8192 -D "rep-soft8" -f "soft8" --qf 3 --qs 5 &
+./simulator.x -m 0 -M 11 -s 1 -e 100 --src-all-zeros --mod-all-ones -K 32 -N 8192 -D "rep-soft8-neon" -f "soft_neon" --qf 3 --qs 5 &
 ./simulator.x -m 0 -M 11 -s 1 -e 100 -K 32 -N 8192 -D "rep-soft" -f "soft_random" &

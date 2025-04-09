@@ -123,7 +123,10 @@ void codec_repetition_hard_decode8(const int8_t *L8_N, uint8_t *V_K, size_t K, s
     for (int i=0; i<K; i++) {
         average = 0;
 	    for (int j= 0; j<n_reps; j++) {
-            average += (L8_N[i+j*K] < 0 ? -1  : 1) ;
+            int hard_decision = (L8_N[i+j*K] < 0 ? -1  : 1);
+            if (!(average == 0b01111111 && hard_decision ==1)
+            && !(average == 0b10000000 && hard_decision == -1)) //Prevents overflow
+                average += hard_decision;
         }
         V_K[i] = (average<0?1:0);
     }
@@ -138,7 +141,7 @@ int8_t sat_int_add(int8_t a, int8_t b) {
 }
 
 void codec_repetition_soft_decode8(const int8_t *L8_N, uint8_t *V_K, size_t K, size_t n_reps) {
-    int8_t avg;
+    int16_t avg;
     for (int i=0; i<K; i++) {
         avg = 0;
         for (int j=0; j<n_reps; j++) {
