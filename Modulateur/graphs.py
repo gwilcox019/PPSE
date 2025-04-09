@@ -8,17 +8,18 @@ import pandas
 
 ## Files = (namefile, legend, print format)
 ## with print format being first the dot style (x, +, . ...) and then the line style (usually - for continuous or -- for dashed)
-files = [("sim_hard_random.csv", "Random", "o-"),
+files = [ 
          ("sim_hard.csv", "Float", "p-"),
          ("sim_hard8.csv", "Fixed", "s-"),
-         ("sim_hard_neon.csv", "Neon", "x-")
+         ("sim_hard_neon.csv", "Neon", "x-"),
+         ("sim_hard_random.csv", "Random", ".-")
 ]
 
 output = "hard_comp"
 xlabel = "Signal to Noise Ratio (Eb/N0) (dB)"  
-ylabel = "Frame Error Rate"
+ylabel = "Bit Error Rate"
 x = "Eb/No"
-y = "FER"
+y = "BER"
 
 for elem in files:
     sim = pandas.read_csv(elem[0])

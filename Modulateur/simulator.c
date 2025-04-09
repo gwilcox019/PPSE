@@ -147,9 +147,6 @@ void codec_repetition_soft_decode8(const int8_t *L8_N, uint8_t *V_K, size_t K, s
         if (avg < 0) V_K[i] = 1;
         else V_K[i] = 0;
     }
-    printf("soft decode result w fixed point: ");
-    print_array(V_K, K);
-    printf("\n");
 }
 
 void codec_repetition_hard_decode (const float* L_N, uint8_t* V_N, size_t k, size_t n_reps) {
@@ -176,9 +173,6 @@ void codec_repetition_soft_decode (const float* L_N, uint8_t *V_N, size_t k, siz
         if (avg < 0) V_N[i] = 1;
         else V_N[i] = 0;
     }
-    printf("soft decode result NORMAL: ");
-    print_array(V_N, k);
-    printf("\n");
 }
 
 void codec_repetition_hard_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t K, size_t n_reps) {
@@ -415,8 +409,8 @@ int main( int argc, char** argv) {
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
             avg_time[0] += cycles;
 	    
-            min_time[0]  = ((min_time[0] == INFINITY || cycles < min_time[0]) ? cycles : min_time[0]);
-            max_time[0]  = ((max_time[0] == -INFINITY || cycles > max_time[0]) ? cycles : max_time[0]);
+            min_time[0]  = ((cycles < min_time[0]) ? cycles : min_time[0]);
+            max_time[0]  = ((cycles > max_time[0]) ? cycles : max_time[0]);
 	             
             total_time_func += cycles;
             #endif
@@ -430,8 +424,8 @@ int main( int argc, char** argv) {
             end_step = clock(); 
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
             avg_time[1] += cycles;
-            min_time[1]  = ((min_time[1] == INFINITY || cycles < min_time[1]) ? cycles : min_time[1]);
-            max_time[1]  = ((max_time[1] == -INFINITY || cycles > max_time[1]) ? cycles : max_time[1]);
+            min_time[1]  = ((cycles < min_time[1]) ? cycles : min_time[1]);
+            max_time[1]  = ((cycles > max_time[1]) ? cycles : max_time[1]);
             total_time_func += cycles;
             #endif
 
@@ -444,8 +438,8 @@ int main( int argc, char** argv) {
             end_step = clock(); 
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
             avg_time[2] += cycles;
-            min_time[2]  = ((min_time[2] == INFINITY || cycles < min_time[0]) ? cycles : min_time[0]);
-            max_time[2]  = ((max_time[2] == -INFINITY || cycles > max_time[0]) ? cycles : max_time[0]);
+            min_time[2]  = ((cycles < min_time[2]) ? cycles : min_time[2]);
+            max_time[2]  = ((cycles > max_time[2]) ? cycles : max_time[2]);
             total_time_func += cycles;
             #endif
             
@@ -458,8 +452,8 @@ int main( int argc, char** argv) {
             end_step = clock(); 
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
             avg_time[3] += cycles;
-            min_time[3]  = ((min_time[3] == INFINITY || cycles < min_time[0]) ? cycles : min_time[0]);
-            max_time[3]  = ((max_time[3] == -INFINITY || cycles > max_time[0]) ? cycles : max_time[0]);
+            min_time[3]  = ((cycles < min_time[3]) ? cycles : min_time[0]);
+            max_time[3]  = ((cycles > max_time[3]) ? cycles : max_time[0]);
             total_time_func += cycles;
             #endif
 
@@ -472,8 +466,8 @@ int main( int argc, char** argv) {
             end_step = clock(); 
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
             avg_time[4] += cycles;
-            min_time[4]  = ((min_time[4] == INFINITY || cycles < min_time[0]) ? cycles : min_time[0]);
-            max_time[4]  = ((max_time[4] == -INFINITY || cycles > max_time[0]) ? cycles : max_time[0]);
+            min_time[4]  = ((cycles < min_time[4]) ? cycles : min_time[0]);
+            max_time[4]  = ((cycles > max_time[4]) ? cycles : max_time[0]);
             total_time_func += cycles;
             #endif
 
@@ -489,8 +483,8 @@ int main( int argc, char** argv) {
             end_step = clock(); 
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
             avg_time[5] += cycles;
-            min_time[5]  = ((min_time[5] == INFINITY || cycles < min_time[0]) ? cycles : min_time[0]);
-            max_time[5]  = ((max_time[5] == -INFINITY || cycles > max_time[0]) ? cycles : max_time[0]);
+            min_time[5]  = ((cycles < min_time[5]) ? cycles : min_time[0]);
+            max_time[5]  = ((cycles > max_time[5]) ? cycles : max_time[0]);
             total_time_func += cycles;
             #endif
 
@@ -503,8 +497,8 @@ int main( int argc, char** argv) {
             end_step = clock(); 
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
             avg_time[6] += cycles;
-            min_time[6]  = ((min_time[6] == INFINITY || cycles < min_time[0]) ? cycles : min_time[0]);
-            max_time[6]  = ((max_time[6] == -INFINITY || cycles > max_time[0]) ? cycles : max_time[0]);
+            min_time[6]  = ((cycles < min_time[6]) ? cycles : min_time[6]);
+            max_time[6]  = ((cycles > max_time[6]) ? cycles : max_time[6]);
             total_time_func += cycles;
             #endif
 
