@@ -102,5 +102,15 @@ We iterate on each part of the array (`array_nb = K/16`), and on each repetition
 
 When doing the simulation with the Neon version, the fixed-point version, the original version as well as the randomized original version (comparison point), we see that all are approximately the same results. 
 
-**todo throughput comparison**
+When comparing the throughputs, we see that floating point has the best throughput of the 3. We assume it is because it takes more time to transform floats into fixed-point, which causes to reduce the throughput.  
+When comparing between fixed-point and neon, we find that vectorial instructions do have a better throughput, which is what we expected.
 
+We also compared the execution times ; we could see that the time it took to simulate one frame was way less for the SIMD decoder compared to the scalar ones.
+
+**Ajouter 3 graphes**
+- le throughput
+- la vitesse globale de traitement d'une frame
+- les performances de décodage
+
+**Soft decoder**
+**GRACE TODO
