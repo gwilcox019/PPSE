@@ -58,7 +58,7 @@ void display_uint8x16 (uint8x16_t vector) {
 }
 void display_int8x16 (int8x16_t vector) {
     int8_t T[16];
-    vst1q_u8((uint8_t)T, (uint8x16_t)vector);
+    vst1q_u8((uint8_t *)T, (uint8x16_t)vector);
     for (int i=0; i<16; i++) {
         printf("%i ; ", T[i]);
     }
@@ -236,7 +236,7 @@ void codec_repetition_soft_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t
     
     int8x16_t one = vdupq_n_s8(1);
     for (int i=0; i<k16; i++) {
-        avg[i] = vandq_s8((uint8x16_t)vcltzq_s8(avg[i]), one); // check avg < 0, use bit mask bc true result = 0xFFFF_FFFF
+        avg[i] = vandq_s8((uint8x16_t *)vcltzq_s8(avg[i]), one); // check avg < 0, use bit mask bc true result = 0xFFFF_FFFF
         vst1q_s8((int8_t*)V_K+i*16, avg[i]); // save result
     }
     printf("SIMD soft decode result : ");
