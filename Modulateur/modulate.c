@@ -1,7 +1,5 @@
 #include "modulate.h"
 
-// modulates encoded codeword where 0 -> 1, 1 -> -1
-// read from C_N, write into X_N
 void module_bpsk_modulate (const uint8_t* CN, int32_t* XN, size_t n) {
     for (; n>0; n--)
         XN[n-1] = (CN[n-1]?-1:1);
@@ -14,9 +12,9 @@ void modem_BPSK_modulate_all_ones(const uint8_t *C_N, int32_t *X_N, size_t N) {
 
 void modem_BPSK_demodulate (const float* Y_N, float* L_N, size_t n, float sigma){
     float constant = 2.0f/(sigma*sigma);
-for (int i=0; i<n; i++) {
-    L_N[i] = Y_N[i] * constant; 
-}
+    for (int i=0; i<n; i++) {
+        L_N[i] = Y_N[i] * constant; 
+    }
 }
 
 // adds random noise following a normal distribution

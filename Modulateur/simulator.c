@@ -20,7 +20,7 @@
 
 int main( int argc, char** argv) {
     
-    // simulation parameters
+    // simulation parameters & default values
     float min_SNR = 0;
     float max_SNR = 12;
     float step_val = 1;
@@ -28,16 +28,22 @@ int main( int argc, char** argv) {
     uint32_t info_bits = 32;
     uint32_t codeword_size = 128;
 
+    // Parameters for fixed-point functions
     char use_fixed = 0;
     int f = 3;
     int s = 7;
 
+    //Function pointers to easily change the function used
     void  (*decoder_fn_float) (const float*, uint8_t *, size_t, size_t) = codec_repetition_soft_decode;
     void  (*decoder_fn_fixed) (const int8_t*, uint8_t *, size_t, size_t) = codec_repetition_soft_decode8;
     void (*generate_fn) (uint8_t*, size_t) = source_generate;
     void (*modulate_fn) (const uint8_t*, int32_t*, size_t) = module_bpsk_modulate;
+
+    //Filepaths where we store our stats
     char filepath[20] = {0};
     char filepath_stats[30] = {0};
+
+
     // For long option - we set an alias
     struct option zero_opt[5] = {{"src-all-zeros", no_argument, NULL, 'z'}, 
                                 {"mod-all-ones", no_argument, NULL, 'o'},
@@ -97,7 +103,6 @@ int main( int argc, char** argv) {
                 // Using qs should do nothing if we didn't call qf -- no use_float = 1 here
                 s = atoi(optarg);
                 break;
-
         }
     }
 
@@ -116,9 +121,6 @@ int main( int argc, char** argv) {
     float R = (float)info_bits/codeword_size; // Ratio - need to cast to float else rounds to ints
     uint32_t n_reps = codeword_size/info_bits; //Number of repetitions
 
-    // blocks used :          source gen, encode,        modulate,      channel,       demodulate,    decode,    monitor
-    uint32_t block_bits[7] = {info_bits,  codeword_size, codeword_size, codeword_size, codeword_size, info_bits, info_bits}; // number of bits for each block
-
     // Stats - computed after one loop
     float ber, fer;
 
@@ -126,75 +128,80 @@ int main( int argc, char** argv) {
     FILE* file;
     if (filepath[0] == 0) file = stdout;
     else file = fopen(filepath, "w");
+    fprintf(file, "Eb/No,Es/No,Sigma,# Bit Errors,# Frame Errors,# Simulated frames,BER,FER,Time for this SNR,Average time for one frame,SNR throughput\n");
+
     FILE* file_stats;
     if (filepath_stats[0] == 0) file_stats = stdout;
     else file_stats = fopen(filepath_stats, "w");
-    fprintf(file, "Eb/No,Es/No,Sigma,# Bit Errors,# Frame Errors,# Simulated frames,BER,FER,Time for this SNR,Average time for one frame,SNR throughput\n");
     fprintf(file_stats, "Eb/No,gen_avg,gen_min,gen_max,gen_thr,gen_percent,encode_avg,encode_min,encode_max,encode_thr,encode_percent,bpsk_avg,bpsk_min,bpsk_max,bpsk_thr,bpsk_percent,awgn_avg,awgn_min,awgn_max,awgn_thr,awgn_percent,demodulate_avg,demodulate_min_demodulate_max,demodulate_thr,demodulate_percent,decode_avg,decode_min,decode_max,decode_thr,decode_percent,monitor_avg,monitor_min,monitor_max,monitor_thr,monitor_percent\n");
+    
     // Time computation
     clock_t start_time, end_time; // total SNR sim time
-    clock_t begin_step, end_step; // block times
     float elapsed=0; // total time for 1 SNR sim (including all calculations)
-    float total_time_func = 0; // total time for 1 SNR sim NOT including calculations
     float average=0; // average time per frame for 1 SNR sim
     float sim_thr; // throughput for 1 SNR sim (Mbps)
 
     //Per-block statistics
     #ifdef ENABLE_STATS
+    // blocks used :          source gen, encode,        modulate,      channel,       demodulate,    decode,    monitor
+    uint32_t block_bits[7] = {info_bits,  codeword_size, codeword_size, codeword_size, codeword_size, info_bits, info_bits}; // number of bits for each block
     float min_time[7] = {-1};
     float max_time[7] = {-1};
     float avg_time[7] = {0};
     float avg_thr[7] = {0};
     float cycles = 0;
+    clock_t begin_step, end_step; // block times
+    float total_time_func = 0; // total time for 1 SNR sim NOT including calculations
     #endif
     
-    //Init random
+    //Init random - for generation and normal law
     srand(time(NULL));   // Initialization, should only be called once.
     const gsl_rng_type * rangentype;
     rangentype = gsl_rng_default;
     gsl_rng * rangen = gsl_rng_alloc (rangentype); // random number gen w uniform distr 
 
+    //Start loop
     for (float val = min_SNR; val <= max_SNR; val+=step_val) {
+        //Reset stats
         start_time = clock();
         n_bit_errors = 0;
         n_frame_errors = 0;
         n_frame_simulated = 0;
         total_time_func = 0;
         
-        #ifdef ENABLE_STATS
-	for (int i=0; i<7; i++) {
-		min_time[i] = INFINITY;
-		max_time[i] = -INFINITY;
-		avg_time[i] = 0;
-	}
+        #ifdef ENABLE_STATS //Reset stats only if stats enabled
+        for (int i=0; i<7; i++) {
+            min_time[i] = INFINITY;
+            max_time[i] = -INFINITY;
+            avg_time[i] = 0;
+        }
         #endif
 
+        //Init our Es/No and sigma
         SNR_better = val + 10*log10f(R); // have to use log10 not just log
         sigma = sqrt( 1 / (2 * pow(10, (SNR_better/10) ) ) ); 
 
-        printf("current snr = %f, min snr = %f, max snr = %f, sigma = %f\n", min_SNR, max_SNR, val, sigma);
+        printf("current snr = %f, min snr = %f, max snr = %f, sigma = %f\n", val, min_SNR, max_SNR, sigma);
 
         // simulate this snr until we reach desired number of errors
         do {
             // SOURCE GEN - create frame
             #ifdef ENABLE_STATS
-             begin_step = clock();
+            begin_step = clock();
             #endif
             generate_fn(U_K, info_bits);
-	    #ifdef ENABLE_STATS
+	        #ifdef ENABLE_STATS
             end_step = clock(); 
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
             avg_time[0] += cycles;
-	    
             min_time[0]  = ((cycles < min_time[0]) ? cycles : min_time[0]);
-            max_time[0]  = ((cycles > max_time[0]) ? cycles : max_time[0]);
-	             
+            max_time[0]  = ((cycles > max_time[0]) ? cycles : max_time[0]); 
             total_time_func += cycles;
             #endif
 
             // ENCODE - form codeword (repetitions)
             #ifdef ENABLE_STATS
-             begin_step = clock();
+            begin_step = clock();
             #endif
             encoder_repetition_encode(U_K,C_N,info_bits,n_reps);
             #ifdef ENABLE_STATS
@@ -208,7 +215,7 @@ int main( int argc, char** argv) {
 
             // MODULATE - convert to symbol
             #ifdef ENABLE_STATS
-             begin_step = clock();
+            begin_step = clock();
             #endif
             modulate_fn(C_N, X_N, codeword_size);
             #ifdef ENABLE_STATS
@@ -222,10 +229,10 @@ int main( int argc, char** argv) {
             
             // CHANNEL - add noise
             #ifdef ENABLE_STATS
-             begin_step = clock();
+            begin_step = clock();
             #endif
             channel_AGWN_add_noise(X_N, Y_N, codeword_size, sigma, rangen);
- 	    #ifdef ENABLE_STATS
+ 	        #ifdef ENABLE_STATS
             end_step = clock(); 
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
             avg_time[3] += cycles;
@@ -236,7 +243,7 @@ int main( int argc, char** argv) {
 
             // DEMODULATE - receive from channel
             #ifdef ENABLE_STATS
-             begin_step = clock();
+            begin_step = clock();
             #endif
             modem_BPSK_demodulate(Y_N, L_N, codeword_size, sigma);
             #ifdef ENABLE_STATS
@@ -250,12 +257,13 @@ int main( int argc, char** argv) {
 
             // DECODE - recover message 
             #ifdef ENABLE_STATS
-             begin_step = clock();
+            begin_step = clock();
             #endif
             if (use_fixed) {
-                quantizer_transform8(L_N, L8_N, codeword_size, s, f);                //Quantizer
+                quantizer_transform8(L_N, L8_N, codeword_size, s, f);     //Quantizer
                 decoder_fn_fixed(L8_N, V_K, info_bits, n_reps);
-            } else decoder_fn_float ( L_N, V_K, info_bits, n_reps);
+            } 
+            else decoder_fn_float ( L_N, V_K, info_bits, n_reps);
             #ifdef ENABLE_STATS
             end_step = clock(); 
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
@@ -267,7 +275,7 @@ int main( int argc, char** argv) {
 
             // MONITOR - error check
             #ifdef ENABLE_STATS
-             begin_step = clock();
+            begin_step = clock();
             #endif
             monitor_check_errors(U_K, V_K, info_bits, &n_bit_errors, &n_frame_errors);
             #ifdef ENABLE_STATS
@@ -307,15 +315,15 @@ int main( int argc, char** argv) {
             avg_time[4], min_time[4], max_time[4], avg_thr[4], avg_time[4] * 100/(total_time_func/n_frame_simulated),
             avg_time[5], min_time[5], max_time[5], avg_thr[5], avg_time[5] * 100/(total_time_func/n_frame_simulated),
             avg_time[6], min_time[6], max_time[6], avg_thr[6], avg_time[6] * 100/(total_time_func/n_frame_simulated) );
-	fflush(file_stats);
+	    fflush(file_stats);
         #endif
 
         // Writing in file
-        fprintf(file, "%f, %f, %f, %li, %li, %li, %f, %f, %f, %f, %f\n", 
+        fprintf(file, "%f, %f, %f, %llu, %llu, %llu, %f, %f, %f, %f, %f\n", 
             val, SNR_better, sigma,
             n_bit_errors, n_frame_errors, n_frame_simulated,
             ber, fer, elapsed, average, sim_thr);
-	fflush(file);
+	    fflush(file);
     }
     gsl_rng_free (rangen);
     return 0;

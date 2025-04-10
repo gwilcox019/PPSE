@@ -31,15 +31,19 @@ void print_array_float (float* array, size_t size) {
 }
 void display_uint8x16 (uint8x16_t vector) {
     uint8_t T[16];
+    printf("[");
     vst1q_u8(T, vector);
     for (int i=0; i<16; i++) {
         printf("%i ; ", T[i]);
     }
+    printf("]\n");
 }
 void display_int8x16 (int8x16_t vector) {
     int8_t T[16];
+    printf("[");
     vst1q_u8((uint8_t *)T, (uint8x16_t)vector);
     for (int i=0; i<16; i++) {
         printf("%i ; ", T[i]);
     }
+    printf("]\n");
 }
