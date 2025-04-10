@@ -114,8 +114,8 @@ void modem_BPSK_demodulate (const float* Y_N, float* L_N, size_t n, float sigma)
 
 // transform to fixed point
 void quantizer_transform8 (const float* L_N, int8_t* L8_N, size_t N, size_t s, size_t f) {
-    int8_t range = pow(2,s-1);
-    int8_t frange = pow(2,f);
+    int range = pow(2,s-1);
+    int frange = pow(2,f);
     for (int i = 0; i<N; i++) {
         L8_N[i] = MIN(MAX(round(frange*L_N[i]),-range),range-1);
 //	printf("%f -> %i\n",L_N[i],L8_N[i]);
