@@ -107,10 +107,11 @@ When comparing between fixed-point and neon, we find that vectorial instructions
 
 We also compared the execution times ; we could see that the time it took to simulate one frame was way less for the SIMD decoder compared to the scalar ones.
 
-**Ajouter 3 graphes**
+**Ajouter 4 graphes**
 - le throughput
 - la vitesse globale de traitement d'une frame
+- **La vitesse spécifiquement pour le décodage - besoin d'ajouter les stats
 - les performances de décodage
 
 **Soft decoder**
-**GRACE TODO
+**GRACE TODO**

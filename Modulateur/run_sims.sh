@@ -5,7 +5,7 @@
 # This script will automatically run the 5 sims in background at the same time with the inputted parameters
 # Quicker to execute and super fun !
 
-gcc simulator.c -o simulator.x -Wall -std=c99 -I/usr/include/gsl -lgsl -lgslcblas -lm -O3 -march=native
+gcc simulator.c -o simulator.x -Wall -std=c99 -I/usr/include/gsl -lgsl -lgslcblas -lm -O3 -march=native -DENABLE_STATS
 
 # Check usage
 # if [ "$#" -ne 2 ]; then

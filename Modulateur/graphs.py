@@ -10,16 +10,15 @@ import pandas
 ## with print format being first the dot style (x, +, . ...) and then the line style (usually - for continuous or -- for dashed)
 files = [ 
          ("sim_soft.csv", "Float", "s-"),
-         ("sim_soft8.csv", "Fixed", "t-"),
-         ("sim_soft_neon.csv", "Neon", "x-"),
-         ("sim_soft_random.csv", "Random", ".-")
+         ("sim_soft8.csv", "Fixed", "^-"),
+         ("sim_soft_neon.csv", "Neon", "x-")
 ]
 
-output = "soft_comp"
+output = "soft_comp_time_all"
 xlabel = "Signal to Noise Ratio (Eb/N0) (dB)"  
-ylabel = "Bit Error Rate"
+ylabel = "Average time for one frame (microseconds)"
 x = "Eb/No"
-y = "BER"
+y = "Average time for one frame"
 
 for elem in files:
     sim = pandas.read_csv(elem[0])
