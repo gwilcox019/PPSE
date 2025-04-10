@@ -2,6 +2,7 @@
 #define GENERATE_H
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 // generates random frame of k bits
 //write into the buffer U_K

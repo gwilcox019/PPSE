@@ -1,6 +1,10 @@
 CC=gcc
-CFLAGS=-Wall -std=c99 -O3 -march=native
-LDLIBS= -I/usr/include/gsl -lgsl -lgslcblas -lm
+CFLAGS=-Wall -std=c99 -O3 -march=native -I/opt/homebrew/opt/gsl/include
+# mac version
+LDFLAGS=-L/opt/homebrew/opt/gsl/lib 
+LDLIBS=-lgsl -lgslcblas -lm
+# jetson version
+#LDLIBS= -I/usr/include/gsl -lgsl -lgslcblas -lm
 
 all: simulator.x
 
