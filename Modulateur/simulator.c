@@ -207,6 +207,7 @@ void codec_repetition_hard_decode8_neon(const int8_t *L8_N, uint8_t *V_K, size_t
     int8x16_t sum; //Stores the local sum for that part of the array
     int8x16_t only1 = vdupq_n_s8(1);
     for (int a=0; a<array_nb; a++) { //Pour chaque groupe de 16 valeurs (taille de K)
+        sum = vdupq_n_s8(0);
         for (int r=0; r<n_reps; r++) { //Pour chacune des répétitions
             //Préparation de la partie a
             decomposed = vld1q_s8(L8_N + (r*K + a*16));
