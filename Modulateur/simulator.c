@@ -125,10 +125,17 @@ void quantizer_transform8 (const float* L_N, int8_t* L8_N, size_t N, size_t s, s
 
 void codec_repetition_hard_decode8(const int8_t *L8_N, uint8_t *V_K, size_t K, size_t n_reps) {
     int average = 0;
+    int tie = 0;
     for (int i=0; i<K; i++) {
         average = 0;
-	for (int j= 0; j<n_reps; j++) { 
+	    for (int j= 0; j<n_reps; j++) { 
             average += (L8_N[i+j*K] < 0 ? -1  : 1);
+        }
+        if (average < 0) V_K[i] = 1;
+        else if (average > 0) V_K[i] = 0;
+        else {           
+            V_N[i] = tie;
+            tie = 1 - tie;
         }
         V_K[i] = (average<0?1:0);
     }
@@ -150,8 +157,7 @@ void codec_repetition_soft_decode8(const int8_t *L8_N, uint8_t *V_K, size_t K, s
         for (int j=0; j<n_reps; j++) {
             if (avg != 0x7FFF && avg != 0x8000) { //Once overflow is reached, we cannot undo it
                 avg += ((int)(L8_N[j*K+i]));
-	       
-	    }
+	        }
         }
         if (avg < 0) V_K[i] = 1;
         else V_K[i] = 0;
