@@ -9,16 +9,16 @@ import pandas
 ## Files = (namefile, legend, print format)
 ## with print format being first the dot style (x, +, . ...) and then the line style (usually - for continuous or -- for dashed)
 files = [ 
-         ("sim_soft.csv", "Float", "s-"),
-         ("sim_soft8.csv", "Fixed", "^-"),
-         ("sim_soft_neon.csv", "Neon", "x-")
+         ("sim_soft_stats.csv", "Float", "s-"),
+         ("sim_soft8_stats.csv", "Fixed", "^-"),
+         ("sim_soft_neon_stats.csv", "Neon", "x-")
 ]
 
-output = "soft_comp_time_all"
+output = "decode_soft"
 xlabel = "Signal to Noise Ratio (Eb/N0) (dB)"  
-ylabel = "Average time for one frame (microseconds)"
+ylabel = "Average time for decoding (microseconds)"
 x = "Eb/No"
-y = "Average time for one frame"
+y = "decode_avg"
 
 for elem in files:
     sim = pandas.read_csv(elem[0])
@@ -30,7 +30,7 @@ for elem in files:
 
 plt.xlabel(xlabel)
 plt.ylabel(ylabel)
-plt.yscale("log")
+# plt.yscale("log")
 plt.legend()
 plt.grid()
 plt.savefig(output+".jpg", format="jpg")
