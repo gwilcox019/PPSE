@@ -108,8 +108,8 @@ When comparing between fixed-point and neon, we find that vectorial instructions
 Note: Because of the Y-axis values taking so much space, the Y axis legend seems to be out of frame. It is in fact "Throughput (Mbps)".
 ![throughput hard](Task6/throughput_hard.jpg)
 
-We also compared the execution times for the decoder block ; (we could see that the time it took to simulate one frame was way less for the SIMD decoder compared to the scalar ones.)
-**Insert graph for comparison for 1 block**
+We also compared the execution times for treating one frame ; we could see that the time it took to simulate one frame was reduced for the SIMD decoder compared to the scalar ones. 
+![time hard](Task6/decode_hard.jpg)
 
 ### Soft decoder
 **:::warning
@@ -118,6 +118,7 @@ TODO GRACE
 
 ![performances soft](Task6/perf_soft.jpg)
 ![throughput soft](Task6/throughput_soft.jpg)
+![time soft](Task6/decode_soft.jpg)
 
 **Soft decoder**
 **GRACE TODO**

@@ -1,4 +1,7 @@
 *.x
+*.o
+**/*.o
 Modulateur/simulator
 Modulateur/simulator.x
 Modulateur/simulateur.dSYM/*
+Modulateur/simulateur.dSYM/** */
