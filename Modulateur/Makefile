@@ -25,4 +25,4 @@ decode.o: decode.c decode.h
 monitor.o: monitor.c monitor.h
 
 clean:
-	rm *.x *.o
+	rm *.x *.o simulator
