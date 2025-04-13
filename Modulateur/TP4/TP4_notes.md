@@ -22,7 +22,7 @@ We change our code to be able to compute stats per block.
 ... 
 #end if
 ``` 
-- When enabled, we instanciate some more variables, and we measure time before calling the block function, as well as after it returns. We then compute the elapsed time.
+- When enabled, we instantiate some more variables, and we measure time before calling the block function, as well as after it returns. We then compute the elapsed time.
 - We keep track of the min and the max by storing them in an array and comparing after each iteration. We initialize those arrays at value +Infinity (for the min array) and -Infinity (for the max array).
 - We keep track of the average by adding the time for each iteration, then dividing it by the number of iteration for this SNR.
 - We compute the percentage by dividing by the total elapsed time, excluding the time spent computing.
