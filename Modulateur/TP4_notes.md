@@ -103,12 +103,12 @@ We iterate on each part of the array (`array_nb = K/16`), and on each repetition
 When doing the simulation with the Neon version, the fixed-point version, and the original version, we see that all are approximately the same results.
 ![performances hard](Task6/perf_hard.jpg)
 
-When comparing the throughputs, we see that floating point has the best throughput of the 3. We assume it is because it takes more time to transform floats into fixed-point, which causes to reduce the throughput.  
+When comparing the throughputs for one frame, we see that floating point has the best throughput of the 3. We assume it is because it takes more time to transform floats into fixed-point, which causes to reduce the throughput.  
 When comparing between fixed-point and neon, we find that vectorial instructions do have a better throughput, which is what we expected.
 Note: Because of the Y-axis values taking so much space, the Y axis legend seems to be out of frame. It is in fact "Throughput (Mbps)".
 ![throughput hard](Task6/throughput_hard.jpg)
 
-We also compared the execution times for treating one frame ; we could see that the time it took to simulate one frame was reduced for the SIMD decoder compared to the scalar ones. 
+We also compared the execution times for decoding one frame. We assume fixed-point is a bit quicker than floating-point because fixed-point works on 8-bit values while floating-point works on 32-bits, but the difference is very small. On the other hand, SIMD decoding is much quicker than its scalar counterpart, by approximately 8 times. This is what we expected: we are treating 8 elements at once in the SIMD version, but because the code is a bit more complicated because of the instructions we could use, it is not exactly 8 times quicker. It is still an significant time.
 ![time hard](Task6/decode_hard.jpg)
 
 ### Soft decoder
@@ -117,6 +117,8 @@ TODO GRACE
 :::**
 
 ![performances soft](Task6/perf_soft.jpg)
+
+Note: Because of the Y-axis values taking so much space, the Y axis legend seems to be out of frame. It is in fact "Throughput (Mbps)".
 ![throughput soft](Task6/throughput_soft.jpg)
 ![time soft](Task6/decode_soft.jpg)
 

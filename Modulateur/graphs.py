@@ -9,16 +9,16 @@ import pandas
 ## Files = (namefile, legend, print format)
 ## with print format being first the dot style (x, +, . ...) and then the line style (usually - for continuous or -- for dashed)
 files = [ 
-         ("sim_hard.csv", "Float", "s-"),
-         ("sim_hard8.csv", "Fixed", "^-"),
-         ("sim_hard_neon.csv", "Neon", "x-")
+         ("sim_hard_stats.csv", "Float", "s-"),
+         ("sim_hard8_stats.csv", "Fixed", "^-"),
+         ("sim_hard_neon_stats.csv", "Neon", "x-")
 ]
 
 output = "decode_hard"
 xlabel = "Signal to Noise Ratio (Eb/N0) (dB)"  
-ylabel = "Average time for one frame (microseconds)"
+ylabel = "Average time for decoding (microseconds)"
 x = "Eb/No"
-y = "Average time for one frame"
+y = "decode_avg"
 
 for elem in files:
     sim = pandas.read_csv(elem[0])
