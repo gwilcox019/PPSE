@@ -257,14 +257,20 @@ int main( int argc, char** argv) {
             #endif
 
             // DECODE - recover message 
-            #ifdef ENABLE_STATS
-            begin_step = clock();
-            #endif
+
             if (use_fixed) {
                 quantizer_transform8(L_N, L8_N, codeword_size, s, f);     //Quantizer
+                #ifdef ENABLE_STATS
+                begin_step = clock(); // We don't want to take quantizer time into account
+                #endif
                 decoder_fn_fixed(L8_N, V_K, info_bits, n_reps);
             } 
-            else decoder_fn_float ( L_N, V_K, info_bits, n_reps);
+            else {
+                #ifdef ENABLE_STATS
+                begin_step = clock();
+                #endif
+                decoder_fn_float ( L_N, V_K, info_bits, n_reps);
+            }
             #ifdef ENABLE_STATS
             end_step = clock(); 
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
