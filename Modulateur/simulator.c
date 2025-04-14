@@ -34,8 +34,8 @@ int main( int argc, char** argv) {
     int s = 7;
 
     //Function pointers to easily change the function used
-    void  (*decoder_fn_float) (const float*, uint8_t *, size_t, size_t) = codec_repetition_soft_decode;
-    void  (*decoder_fn_fixed) (const int8_t*, uint8_t *, size_t, size_t) = codec_repetition_soft_decode8;
+    void (*decoder_fn_float) (const float*, uint8_t *, size_t, size_t) = codec_repetition_soft_decode;
+    void (*decoder_fn_fixed) (const int8_t*, uint8_t *, size_t, size_t) = codec_repetition_soft_decode8;
     void (*generate_fn) (uint8_t*, size_t) = source_generate;
     void (*modulate_fn) (const uint8_t*, int32_t*, size_t) = module_bpsk_modulate;
     void (*demodulate_fn) (const float*, float*, size_t, float) = modem_BPSK_demodulate;
@@ -113,6 +113,20 @@ int main( int argc, char** argv) {
                 break;
         }
     }
+
+    // check s and f values
+    char e = 0;
+    if (use_fixed) {
+        if (s > 7) {
+            printf("ERROR: maximum s value is 7\n");
+            e = 1;
+        }
+        if (s <= f+1) {
+            printf("ERROR: s must be greater than f+1");
+            e = 1;
+        }
+    }
+    if (e == 1) return 1;
 
     // Arrays & simulation parameters
     uint8_t U_K[info_bits]; // Source message
