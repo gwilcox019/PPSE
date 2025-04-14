@@ -5,14 +5,15 @@ void module_bpsk_modulate (const uint8_t* CN, int32_t* XN, size_t n) {
         XN[n-1] = (CN[n-1]?-1:1);
 }
 
+// 0 -> 1, 1 -> -1
 void module_bpsk_modulate_neon (const uint8_t* CN, int32_t* XN, size_t n) {
-    printf("modulating\n");
     int8x16_t l8; // temp vector for loading array
     int8x16_t one = vdupq_n_s8(1); // bit mask 
     for (int i=0; i<n; i+=16) {
         l8 = vld1q_s8((int8_t*)CN+i); // load next 16 values
-        l8 = (int8x16_t)vcltzq_s8(l8); // compare < 0
-        vst1q_s8((int8_t*)XN+i,vandq_s8(l8,one)); // mask to get 1 or 0, store in XN
+        l8 = (int8x16_t)vcgtzq_s8(l8);  // check if > 0, 1 -> -1, 0 -> 0
+        l8 = vaddq_s8(l8,l8); // 2*l8, 1 -> -2, 0 -> 0
+        vst1q_s8((int8_t*)XN+i,vaddq_s8(l8,one)); // l8+1, 1 -> -1, 0 -> 1
     }
 }
 
