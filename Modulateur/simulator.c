@@ -61,7 +61,7 @@ int main( int argc, char** argv) {
     // The following argument is then stored in optarg variable
     int opt;
     //Loops while something to read
-    while ((opt = getopt_long(argc, argv, "m:M:s:e:K:N:D:f:o", zero_opt, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "m:M:s:e:K:N:D:f:o:", zero_opt, &long_index)) != -1) {
         switch(opt) {
             case 'm': min_SNR = atof(optarg); break;
             case 'M': if ((max_SNR = atof(optarg)) == 0) max_SNR = 12; break;

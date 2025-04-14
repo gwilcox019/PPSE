@@ -6,6 +6,7 @@ void module_bpsk_modulate (const uint8_t* CN, int32_t* XN, size_t n) {
 }
 
 void module_bpsk_modulate_neon (const uint8_t* CN, int32_t* XN, size_t n) {
+    printf("modulating\n");
     int8x16_t l8; // temp vector for loading array
     int8x16_t one = vdupq_n_s8(1); // bit mask 
     for (int i=0; i<n; i+=16) {
