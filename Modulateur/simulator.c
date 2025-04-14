@@ -38,6 +38,7 @@ int main( int argc, char** argv) {
     void  (*decoder_fn_fixed) (const int8_t*, uint8_t *, size_t, size_t) = codec_repetition_soft_decode8;
     void (*generate_fn) (uint8_t*, size_t) = source_generate;
     void (*modulate_fn) (const uint8_t*, int32_t*, size_t) = module_bpsk_modulate;
+    void (*demodulate_fn) (const float*, float*, size_t, float) = modem_BPSK_demodulate;
 
     //Filepaths where we store our stats
     char filepath[20] = {0};
@@ -46,7 +47,7 @@ int main( int argc, char** argv) {
 
     // For long option - we set an alias
     struct option zero_opt[5] = {{"src-all-zeros", no_argument, NULL, 'z'}, 
-                                {"mod-all-ones", no_argument, NULL, 'o'},
+                                {"demod-neon", no_argument, NULL, 'a'},
                                 {"qf", required_argument, NULL, 'g'},
                                 {"qs", required_argument, NULL, 'h'},
                                 {0,0,0,0}};
@@ -60,7 +61,7 @@ int main( int argc, char** argv) {
     // The following argument is then stored in optarg variable
     int opt;
     //Loops while something to read
-    while ((opt = getopt_long(argc, argv, "m:M:s:e:K:N:D:f:", zero_opt, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "m:M:s:e:K:N:D:f:o", zero_opt, &long_index)) != -1) {
         switch(opt) {
             case 'm': min_SNR = atof(optarg); break;
             case 'M': if ((max_SNR = atof(optarg)) == 0) max_SNR = 12; break;
@@ -87,11 +88,18 @@ int main( int argc, char** argv) {
                 } 
                 break;
             case 'f': sprintf(filepath, "sim_%s.csv", optarg); sprintf(filepath_stats, "sim_%s_stats.csv",optarg); break;
+            case 'o': 
+                if (strcmp(optarg, "mod-all-ones") == 0) {
+                    modulate_fn = modem_BPSK_modulate_all_ones; 
+                } else if (strcmp(optarg, "mod_neon") == 0) {
+                    modulate_fn = module_bpsk_modulate_neon;
+                }
+                break;
             case 'z': //Check long
                 generate_fn = source_generate_all_zeros;
                 break;
-            case 'o': //check long
-                modulate_fn = modem_BPSK_modulate_all_ones; 
+            case 'a': //Check long
+                demodulate_fn = modem_BPSK_demodulate_neon;
                 break;
             case 'g': //float
                 printf("DEBUG : qf called with argument %s\n", optarg);
@@ -246,7 +254,7 @@ int main( int argc, char** argv) {
             #ifdef ENABLE_STATS
             begin_step = clock();
             #endif
-            modem_BPSK_demodulate(Y_N, L_N, codeword_size, sigma);
+            demodulate_fn(Y_N, L_N, codeword_size, sigma);
             #ifdef ENABLE_STATS
             end_step = clock(); 
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
