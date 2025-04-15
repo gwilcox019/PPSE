@@ -8,14 +8,48 @@ void module_bpsk_modulate (const uint8_t* CN, int32_t* XN, size_t n) {
 // 0 -> 1, 1 -> -1
 void module_bpsk_modulate_neon (const uint8_t* CN, int32_t* XN, size_t n) {
     int8x16_t l8; // temp vector for loading array
+    int16x8_t s16[2];
+    int32x4_t s32[4]; // temp vector for storing array
     int8x16_t one = vdupq_n_s8(1); // bit mask 
     for (int i=0; i<n; i+=16) {
         l8 = vld1q_s8((int8_t*)CN+i); // load next 16 values
+        // printf("\nloaded vals:     ");
+        // display_int8x16(l8);
+
         l8 = (int8x16_t)vcgtzq_s8(l8);  // check if > 0, 1 -> -1, 0 -> 0
+        // printf("> 0 ? :          ");
+        // display_int8x16(l8);
+
         l8 = vaddq_s8(l8,l8); // 2*l8, 1 -> -2, 0 -> 0
-        vst1q_s8((int8_t*)XN+i,vaddq_s8(l8,one)); // l8+1, 1 -> -1, 0 -> 1
+        // printf("-2 or 0 :        ");
+        // display_int8x16(l8);
+
+        l8 = vaddq_s8(l8,one); 
+        // printf("-1 or 1 :        ");
+        // display_int8x16(l8);
+
+        s16[0] = vmovl_s8(vget_low_s8(l8));
+        s16[1] = vmovl_high_s8(l8); // convert to 16 bit
+
+        // printf("16 bit low:      ");
+        // display_int16x8(s16[0]);
+        // printf("16 bit high:     ");
+        // display_int16x8(s16[1]);
+
+        s32[0] = vmovl_s16(vget_low_s16(s16[0]));
+        s32[1] = vmovl_high_s16(s16[0]);
+        s32[2] = vmovl_s16(vget_low_s16(s16[1]));
+        s32[3] = vmovl_high_s16(s16[1]);
+        // printf("32 bit :         ");
+        // for (int k=0; k<4; k++) display_int32x4(s32[k]);
+
+        for (int j=0; j<4; j++) vst1q_s32(XN+i+4*j,s32[j]); // l8+1, 1 -> -1, 0 -> 1
     }
 }
+
+void module_bpsk_modulate_bit_pack (const uint8_t* CN, int32_t* XN, size_t n, size_t N) {
+    // n is length of bit packed codeword, N is length of modulated 
+} 
 
 void modem_BPSK_modulate_all_ones(const uint8_t *C_N, int32_t *X_N, size_t N) {
     for (; N>0; N--)
@@ -38,7 +72,6 @@ void modem_BPSK_demodulate_neon (const float* Y_N, float* L_N, size_t n, float s
         vst1q_f32(L_N+i,vmulq_f32(cst,tmp));
     }
 }
-
 
 // adds random noise following a normal distribution
 void channel_AGWN_add_noise(const int32_t* X_N, float* Y_N, size_t n, float sigma, gsl_rng * rangen) {

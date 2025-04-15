@@ -11,7 +11,7 @@
 #include <getopt.h>
 #include <arm_neon.h>
 
-#include "debug_func.h"
+//#include "debug_func.h"
 #include "generate.h"
 #include "encoder.h"
 #include "modulate.h"

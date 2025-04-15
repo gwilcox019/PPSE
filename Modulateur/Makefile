@@ -8,9 +8,11 @@ LDLIBS=-lgsl -lgslcblas -lm
 
 all: simulator
 
-simulator: simulator.o debug_func.o generate.o encoder.o modulate.o decode.o monitor.o
+simulator: simulator.o generate.o encoder.o modulate.o decode.o monitor.o
 
 simulator.o: simulator.c debug_func.h generate.h encoder.h modulate.h decode.h monitor.h
+
+debug_func: debug_func.o generate.o encoder.o modulate.o decode.o monitor.o
 
 debug_func.o: debug_func.c debug_func.h
 

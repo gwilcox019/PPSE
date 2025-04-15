@@ -41,9 +41,101 @@ void display_uint8x16 (uint8x16_t vector) {
 void display_int8x16 (int8x16_t vector) {
     int8_t T[16];
     printf("[");
-    vst1q_u8((uint8_t *)T, (uint8x16_t)vector);
+    vst1q_s8(T, vector);
     for (int i=0; i<16; i++) {
         printf("%i ; ", T[i]);
     }
     printf("]\n");
+}
+
+void display_int16x8 (int16x8_t vector) {
+    int16_t T[8];
+    printf("[");
+    vst1q_s16(T, vector);
+    for (int i=0; i<8; i++) {
+        printf("%i ; ", T[i]);
+    }
+    printf("]\n");
+}
+
+void display_int32x4 (int32x4_t vector) {
+    int32_t T[4];
+    printf("[");
+    vst1q_s32(T, vector);
+    for (int i=0; i<4; i++) {
+        printf("%i ; ", T[i]);
+    }
+    printf("]\n");
+}
+
+int main() {
+ 
+    //Init random
+    srand(time(NULL));   // Initialization, should only be called once.
+    const gsl_rng_type * rangentype;
+    rangentype = gsl_rng_default;
+    gsl_rng * rangen = gsl_rng_alloc (rangentype); // random number gen w uniform distr 
+
+    size_t K = 32, N = 64, REPS = 2;
+    uint8_t UK[N], CN[N];
+    int32_t XN[N];
+    float YN[N], LN[N];
+    int8_t L8N[N];
+    uint8_t VN[K];
+
+    for (int i = 0; i < 1; i++)
+    {
+        // float sigma=0;
+        //  Generate message
+        source_generate(UK, K);
+        printf("\nTableau genere : ");
+        print_array(UK, K);
+
+        // Encoded message
+        encoder_repetition_encode(UK, CN, K, REPS);
+        printf("\nTableau encode : ");
+        print_array(CN, N);
+
+        // Modulated message
+        module_bpsk_modulate_neon(CN, XN, N);
+        printf("\nTableau module : ");
+        print_array_32(XN, N);
+        printf("\n__________\n");
+
+        // Canal message
+        channel_AGWN_add_noise(XN, YN, N, 0.1, rangen);
+        printf("Tableau transmis : \n");
+        print_array_float(YN, N);
+        printf("\n");
+
+        // Demodulated message
+        modem_BPSK_demodulate(YN, LN, N, 0.1);
+        printf("Tableau demodule : \n");
+        print_array_float(LN, N);
+        printf("\n");
+
+        // convert to fixed point
+        // quantizer_transform8(LN, L8N, N, 5, 3);
+
+        // printf("Tableau hard dec : \n");
+        // codec_repetition_hard_decode8_neon(L8N, VN, K, REPS);
+        // printf("\n");
+
+        printf("Tableau soft dec NORMAL: \n");
+        codec_repetition_soft_decode(LN, VN, K, REPS);
+        print_array(VN,K);
+        printf("\n");
+
+        // printf("Tableau soft dec w SIMD: \n");
+        // codec_repetition_soft_decode8_neon(L8N, VN, K, REPS);
+        // printf("\n");
+
+        // printf("Tableau soft dec no SIMD: \n");
+        // codec_repetition_soft_decode8(L8N, VN, K, REPS);
+        // printf("\n");
+
+    }
+
+    gsl_rng_free(rangen);
+    return 0;
 }
