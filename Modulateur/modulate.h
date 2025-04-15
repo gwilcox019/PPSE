@@ -7,8 +7,6 @@
 #include <gsl/gsl_randist.h>
 #include <arm_neon.h>
 
-#include "debug_func.h"
-
 // modulates encoded codeword where 0 -> 1, 1 -> -1
 // read from C_N, write into X_N
 void module_bpsk_modulate (const uint8_t* CN, int32_t* XN, size_t n);

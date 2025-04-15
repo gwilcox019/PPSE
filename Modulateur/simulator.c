@@ -91,7 +91,7 @@ int main( int argc, char** argv) {
             case 'o': 
                 if (strcmp(optarg, "mod-all-ones") == 0) {
                     modulate_fn = modem_BPSK_modulate_all_ones; 
-                } else if (strcmp(optarg, "mod_neon") == 0) {
+                } else if (strcmp(optarg, "mod-neon") == 0) {
                     modulate_fn = module_bpsk_modulate_neon;
                 }
                 break;
@@ -122,7 +122,7 @@ int main( int argc, char** argv) {
             e = 1;
         }
         if (s <= f+1) {
-            printf("ERROR: s must be greater than f+1");
+            printf("ERROR: s must be greater than f+1\n");
             e = 1;
         }
     }

@@ -90,27 +90,34 @@ int main() {
         source_generate(UK, K);
         printf("\nTableau genere : ");
         print_array(UK, K);
+        printf("\n");
 
         // Encoded message
         encoder_repetition_encode(UK, CN, K, REPS);
-        printf("\nTableau encode : ");
-        print_array(CN, N);
+        // printf("\nTableau encode : ");
+        // print_array(CN, N);
 
         // Modulated message
-        module_bpsk_modulate_neon(CN, XN, N);
-        printf("\nTableau module : ");
-        print_array_32(XN, N);
-        printf("\n__________\n");
+        module_bpsk_modulate(CN, XN, N);
+        // printf("\nTableau module : ");
+        // print_array_32(XN, N);
+        // printf("\n__________\n");
 
         // Canal message
         channel_AGWN_add_noise(XN, YN, N, 0.1, rangen);
-        printf("Tableau transmis : \n");
-        print_array_float(YN, N);
-        printf("\n");
+        // printf("Tableau transmis : \n");
+        // print_array_float(YN, N);
+        // printf("\n");
 
         // Demodulated message
         modem_BPSK_demodulate(YN, LN, N, 0.1);
         printf("Tableau demodule : \n");
+        print_array_float(LN, N);
+        printf("\n");
+
+        // Demodulated message
+        modem_BPSK_demodulate_neon(YN, LN, N, 0.1);
+        printf("Tableau demodule neon: \n");
         print_array_float(LN, N);
         printf("\n");
 
@@ -121,10 +128,10 @@ int main() {
         // codec_repetition_hard_decode8_neon(L8N, VN, K, REPS);
         // printf("\n");
 
-        printf("Tableau soft dec NORMAL: \n");
-        codec_repetition_soft_decode(LN, VN, K, REPS);
-        print_array(VN,K);
-        printf("\n");
+        // printf("Tableau soft dec NORMAL: \n");
+        // codec_repetition_soft_decode(LN, VN, K, REPS);
+        // print_array(VN,K);
+        // printf("\n");
 
         // printf("Tableau soft dec w SIMD: \n");
         // codec_repetition_soft_decode8_neon(L8N, VN, K, REPS);

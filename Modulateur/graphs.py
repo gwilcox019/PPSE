@@ -9,16 +9,16 @@ import pandas
 ## Files = (namefile, legend, print format)
 ## with print format being first the dot style (x, +, . ...) and then the line style (usually - for continuous or -- for dashed)
 files = [ 
-         ("sim_test_demod.csv", "neon demod", "s-"),
-         ("./TP4/Task6/sim_hard8.csv", "normal demod", "^-"),
+         ("sim_test_mod_stats.csv", "neon mod", "s-"),
+         ("sim_test_soft_stats.csv", "normal mod", "^-"),
         # ("sim_hard_neon_stats.csv", "Neon", "x-")
 ]
 
-output = "testing_demod_neon"
+output = "testing_mod_neon_time"
 xlabel = "Signal to Noise Ratio (Eb/N0) (dB)"  
-ylabel = "BER"
+ylabel = "avg mod time"
 x = "Eb/No"
-y = "BER"
+y = "bpsk_avg"
 
 for elem in files:
     sim = pandas.read_csv(elem[0])
@@ -30,7 +30,7 @@ for elem in files:
 
 plt.xlabel(xlabel)
 plt.ylabel(ylabel)
-plt.yscale("log")
+#plt.yscale("log")
 plt.legend()
 plt.grid()
 plt.savefig(output+".jpg", format="jpg")

@@ -27,4 +27,4 @@ decode.o: decode.c decode.h
 monitor.o: monitor.c monitor.h
 
 clean:
-	rm *.x *.o simulator
+	rm *.x *.o simulator debug_func
