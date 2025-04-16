@@ -83,14 +83,20 @@ int main() {
     int8_t L8N[N];
     uint8_t VN[K];
 
-    for (int i = 0; i < 1; i++)
+    float cycles = 0;
+    clock_t begin_step, end_step; // block time  
+
+    float avg_neon = 0;
+    float avg_norm = 0;
+
+    for (int i = 0; i < 4000; i++)
     {
         // float sigma=0;
         //  Generate message
         source_generate(UK, K);
-        printf("\nTableau genere : ");
-        print_array(UK, K);
-        printf("\n");
+        // printf("\nTableau genere : ");
+        // print_array(UK, K);
+        // printf("\n");
 
         // Encoded message
         encoder_repetition_encode(UK, CN, K, REPS);
@@ -110,16 +116,30 @@ int main() {
         // printf("\n");
 
         // Demodulated message
+        begin_step = clock();
         modem_BPSK_demodulate(YN, LN, N, 0.1);
-        printf("Tableau demodule : \n");
-        print_array_float(LN, N);
-        printf("\n");
+        end_step = clock(); 
+        cycles = (end_step-begin_step);
+        avg_norm += cycles;
+        if (i == 3000) {
+            printf("Tableau demodule : \n");
+            print_array_float(LN, N);
+            printf("\n");
+            printf("Demod time : %f\n", cycles);
+        }
 
         // Demodulated message
+        begin_step = clock();
         modem_BPSK_demodulate_neon(YN, LN, N, 0.1);
-        printf("Tableau demodule neon: \n");
-        print_array_float(LN, N);
-        printf("\n");
+        end_step = clock(); 
+        cycles = (end_step-begin_step);
+        avg_neon += cycles;
+        if (i == 3000) {
+            printf("Tableau demodule neon : \n");
+            print_array_float(LN, N);
+            printf("\n");
+            printf("Demod time neon : %f\n\n", cycles);
+        }
 
         // convert to fixed point
         // quantizer_transform8(LN, L8N, N, 5, 3);
@@ -143,6 +163,8 @@ int main() {
 
     }
 
+    printf("total demod time : %f\n",avg_norm);
+    printf("total demod neon time : %f\n",avg_neon);
     gsl_rng_free(rangen);
     return 0;
 }

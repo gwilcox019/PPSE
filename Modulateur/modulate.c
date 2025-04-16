@@ -41,19 +41,19 @@ void modem_BPSK_modulate_all_ones(const uint8_t *C_N, int32_t *X_N, size_t N) {
 }
 
 void modem_BPSK_demodulate (const float* Y_N, float* L_N, size_t n, float sigma){
-    float constant = 2.0f/(sigma*sigma);
+    //float constant = 2.0f/(sigma*sigma);
     for (int i=0; i<n; i++) {
-        L_N[i] = Y_N[i] * constant; 
+        L_N[i] = Y_N[i];// * constant; 
     }
 }
 
 void modem_BPSK_demodulate_neon (const float* Y_N, float* L_N, size_t n, float sigma) {
-    float32x4_t tmp, cst;
-    float constant = 2.0f/(sigma*sigma);
-    cst = vdupq_n_f32(constant); 
+    float32x4_t tmp;//, cst;
+    //float constant = 2.0f/(sigma*sigma);
+    //cst = vdupq_n_f32(constant); 
     for (int i=0; i<n; i+=4) {
         tmp = vld1q_f32(Y_N+i); 
-        vst1q_f32(L_N+i,vmulq_f32(cst,tmp));
+        vst1q_f32(L_N+i,tmp);//,vmulq_f32(cst,tmp));
     }
 }
 

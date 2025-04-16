@@ -279,7 +279,6 @@ int main( int argc, char** argv) {
             #endif
 
             // DECODE - recover message 
-
             if (use_fixed) {
                 quantizer_transform8(L_N, L8_N, codeword_size, s, f);     //Quantizer
                 #ifdef ENABLE_STATS
@@ -332,6 +331,7 @@ int main( int argc, char** argv) {
         for (int i=0; i<7; i++) {
             avg_time[i] = (float) avg_time[i]/n_frame_simulated;
         }
+        printf("avg demod time: %f\n",avg_time[4]);
         for (int i=0; i<7; i++) {
             avg_thr[i] = (float) block_bits[i]/avg_time[i];
         }

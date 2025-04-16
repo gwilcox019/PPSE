@@ -9,16 +9,16 @@ import pandas
 ## Files = (namefile, legend, print format)
 ## with print format being first the dot style (x, +, . ...) and then the line style (usually - for continuous or -- for dashed)
 files = [ 
-         ("sim_test_mod_stats.csv", "neon mod", "s-"),
-         ("sim_test_soft_stats.csv", "normal mod", "^-"),
+         ("sim_demod_stats.csv", "neon demod", "s-"),
+         ("sim_norm_stats.csv", "normal demod", "^-"),
         # ("sim_hard_neon_stats.csv", "Neon", "x-")
 ]
 
-output = "testing_mod_neon_time"
+output = "demod_simple_perf"
 xlabel = "Signal to Noise Ratio (Eb/N0) (dB)"  
-ylabel = "avg mod time"
+ylabel = "avg demod time"
 x = "Eb/No"
-y = "bpsk_avg"
+y = "demodulate_avg"
 
 for elem in files:
     sim = pandas.read_csv(elem[0])
