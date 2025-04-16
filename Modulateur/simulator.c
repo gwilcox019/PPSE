@@ -38,6 +38,34 @@ char use_fixed = 0;
 int f = 3;
 int s = 7;
 
+//Computation values
+uint64_t n_bit_errors, n_frame_errors, n_frame_simulated; // Frame and bit stats
+double sigma;                                             // Variance
+float SNR_better;                                         // Es/N0 instead of Eb/N0
+float R;                                                  // Ratio - need to cast to float else rounds to ints
+uint32_t n_reps;                                          // Number of repetitions
+float ber, fer;                                           // Stats - computed after one loop
+
+    // Time computation
+    clock_t start_time, end_time; // total SNR sim time
+    float elapsed = 0;            // total time for 1 SNR sim (including all calculations)
+    float average = 0;            // average time per frame for 1 SNR sim
+    float sim_thr;                // throughput for 1 SNR sim (Mbps)
+
+// Per-block statistics
+#ifdef ENABLE_STATS
+    // blocks used :          source gen, encode,        modulate,      channel,       demodulate,    decode,    monitor
+    uint32_t block_bits[7] = {info_bits, codeword_size, codeword_size, codeword_size, codeword_size, info_bits, info_bits}; // number of bits for each block
+    float min_time[7] = {-1};
+    float max_time[7] = {-1};
+    float avg_time[7] = {0};
+    float avg_thr[7] = {0};
+    float cycles = 0;
+    clock_t begin_step, end_step; // block time
+    float total_time_func = 0; // total time for 1 SNR sim NOT including calculations
+
+#endif
+
 // Function pointers to easily change the function used
 void (*decoder_fn_float)(const float *, uint8_t *, size_t, size_t) = codec_repetition_soft_decode;
 void (*decoder_fn_fixed)(const int8_t *, uint8_t *, size_t, size_t) = codec_repetition_soft_decode8;
@@ -60,15 +88,6 @@ void* routine(void* param) {
         float L_N[codeword_size];   // Demodulated message
         int8_t L8_N[codeword_size]; // Demodulated message
         uint8_t V_K[info_bits];     // Decoded message
-    
-        uint64_t n_bit_errors, n_frame_errors, n_frame_simulated; // Frame and bit stats
-        double sigma;                                             // Variance
-        float SNR_better;                                         // Es/N0 instead of Eb/N0
-        float R = (float)info_bits / codeword_size;               // Ratio - need to cast to float else rounds to ints
-        uint32_t n_reps = codeword_size / info_bits;              // Number of repetitions
-    
-        // Stats - computed after one loop
-        float ber, fer;
 
             // simulate this snr until we reach desired number of errors
             do
@@ -296,13 +315,11 @@ int main(int argc, char **argv)
             break;
         // Number of "decimals" in quantisized value
         case 'g': // float
-            printf("DEBUG : qf called with argument %s\n", optarg);
             use_fixed = 1;
             f = atoi(optarg);
             break;
         // Total number of bits in quantisized value
         case 'h':
-            printf("DEBUG : qs called with argument %s\n", optarg);
             // Using qs should do nothing if we didn't call qf -- no use_float = 1 here
             s = atoi(optarg);
             break;
@@ -329,7 +346,7 @@ int main(int argc, char **argv)
     if (e)
         return 1;
 
-    // Output file
+    // Init output files
     FILE *file;
     if (filepath[0] == 0)
         file = stdout;
@@ -337,33 +354,20 @@ int main(int argc, char **argv)
         file = fopen(filepath, "w");
     fprintf(file, "Eb/No,Es/No,Sigma,# Bit Errors,# Frame Errors,# Simulated frames,BER,FER,Time for this SNR,Average time for one frame,SNR throughput\n");
 
+    #ifdef ENABLE_STATS
     FILE *file_stats;
     if (filepath_stats[0] == 0)
         file_stats = stdout;
     else
         file_stats = fopen(filepath_stats, "w");
     fprintf(file_stats, "Eb/No,gen_avg,gen_min,gen_max,gen_thr,gen_percent,encode_avg,encode_min,encode_max,encode_thr,encode_percent,bpsk_avg,bpsk_min,bpsk_max,bpsk_thr,bpsk_percent,awgn_avg,awgn_min,awgn_max,awgn_thr,awgn_percent,demodulate_avg,demodulate_min,demodulate_max,demodulate_thr,demodulate_percent,decode_avg,decode_min,decode_max,decode_thr,decode_percent,monitor_avg,monitor_min,monitor_max,monitor_thr,monitor_percent\n");
+    #endif
+    
+    //Init constants given out inputs
+    R = (float)info_bits / codeword_size;               // Ratio - need to cast to float else rounds to ints
+    n_reps = codeword_size / info_bits;              // Number of repetitions
 
-    // Time computation
-    clock_t start_time, end_time; // total SNR sim time
-    float elapsed = 0;            // total time for 1 SNR sim (including all calculations)
-    float average = 0;            // average time per frame for 1 SNR sim
-    float sim_thr;                // throughput for 1 SNR sim (Mbps)
 
-// Per-block statistics
-#ifdef ENABLE_STATS
-    // blocks used :          source gen, encode,        modulate,      channel,       demodulate,    decode,    monitor
-    uint32_t block_bits[7] = {info_bits, codeword_size, codeword_size, codeword_size, codeword_size, info_bits, info_bits}; // number of bits for each block
-    float min_time[7] = {-1};
-    float max_time[7] = {-1};
-    float avg_time[7] = {0};
-    float avg_thr[7] = {0};
-    float cycles = 0;
-    clock_t begin_step, end_step; // block time
-#endif
-
-    float total_time_func = 0; // total time for 1 SNR sim NOT including calculations
-                               //
     // Init random - for generation and normal law
     srand(time(NULL)); // Initialization, should only be called once.
     const gsl_rng_type *rangentype;
@@ -373,12 +377,15 @@ int main(int argc, char **argv)
     // Start loop
     for (float val = min_SNR; val <= max_SNR; val += step_val)
     {
+        // Init our Es/No and sigma
+        SNR_better = val + 10 * log10f(R); // have to use log10 not just log
+        sigma = sqrt(1 / (2 * pow(10, (SNR_better / 10))));
+
         // Reset stats
         start_time = clock();
         n_bit_errors = 0;
         n_frame_errors = 0;
         n_frame_simulated = 0;
-        total_time_func = 0;
 
 #ifdef ENABLE_STATS // Reset stats only if stats enabled
         for (int i = 0; i < 7; i++)
@@ -387,11 +394,10 @@ int main(int argc, char **argv)
             max_time[i] = -INFINITY;
             avg_time[i] = 0;
         }
+        
+        total_time_func = 0;
 #endif
 
-        // Init our Es/No and sigma
-        SNR_better = val + 10 * log10f(R); // have to use log10 not just log
-        sigma = sqrt(1 / (2 * pow(10, (SNR_better / 10))));
 
         printf("current snr = %f, min snr = %f, max snr = %f, sigma = %f\n", val, min_SNR, max_SNR, sigma);
 
@@ -412,6 +418,7 @@ int main(int argc, char **argv)
             pthread_join(&t4, NULL);
         }
 
+        //End stats
         end_time = clock();
         elapsed = (float)(end_time - start_time) * 1000000 / CLOCKS_PER_SEC; // microseconds
         average = elapsed / n_frame_simulated;
@@ -451,5 +458,7 @@ int main(int argc, char **argv)
         fflush(file);
     }
     gsl_rng_free(rangen);
+    pthread_mutex_destroy(&fer);
+    pthread_mutex_destroy(&ber);
     return 0;
 }
