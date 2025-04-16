@@ -16,6 +16,11 @@ On a 6 CPU : on va faire 6 threads
 
 # Axe 2 - Optimize one blockwith SIMD
 
+## Optimize modulator
+
+
+## Optimize demodulator
+
 ## Optimize monitor
 We want to speed up the monitor block, by treating 16 elements at a time. We will use SIMD for that.
 

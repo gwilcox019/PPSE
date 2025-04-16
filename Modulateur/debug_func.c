@@ -99,9 +99,15 @@ int main() {
 
         // Modulated message
         module_bpsk_modulate(CN, XN, N);
-        // printf("\nTableau module : ");
-        // print_array_32(XN, N);
-        // printf("\n__________\n");
+        printf("\nTableau module : \n");
+        print_array_32(XN, N);
+        printf("\n__________\n");
+
+        // Modulated message
+        module_bpsk_modulate_neon(CN, XN, N);
+        printf("\nTableau module neon : \n");
+        print_array_32(XN, N);
+        printf("\n__________\n");
 
         // Canal message
         channel_AGWN_add_noise(XN, YN, N, 0.1, rangen);
@@ -111,17 +117,9 @@ int main() {
 
         // Demodulated message
         modem_BPSK_demodulate(YN, LN, N, 0.1);
-        printf("Tableau demodule : \n");
-        print_array_float(LN, N);
-        printf("\n");
-
-
-        // Demodulated message
-        modem_BPSK_demodulate_neon(YN, LN, N, 0.1);
-        printf("Tableau demodule neon : \n");
-        print_array_float(LN, N);
-        printf("\n");
-    
+        // printf("Tableau demodule : \n");
+        // print_array_float(LN, N);
+        // printf("\n");
 
         // convert to fixed point
         // quantizer_transform8(LN, L8N, N, 5, 3);
