@@ -9,25 +9,21 @@ import pandas
 ## Files = (namefile, legend, print format)
 ## with print format being first the dot style (x, +, . ...) and then the line style (usually - for continuous or -- for dashed)
 files = [ 
-         ("sim_mod_stats.csv", "Neon demod", "r"),
-         ("sim_modnor_stats.csv", "Normal demod", "b")
+         ("sim_thread.csv", "With thread", "x-"),
+         ("sim_nothread.csv", "Without thread", "x-"),     
 ]
 
-output = "mod time"
+output = "thread_speed"
 xlabel = "Signal to Noise Ratio (Eb/N0) (dB)"  
-ylabel = "Avg modulation time"
+ylabel = "Average time per frame simulated"
 x = "Eb/No"
-y1 = "bpsk_avg"
-#y2 = "BER"
+y1 = "Average time for one frame"
 
 for elem in files:
     sim = pandas.read_csv(elem[0])
     simX = sim[[x]]
     simY = sim[[y1]]
-    plt.plot(simX, simY, elem[2]+"o-", label=elem[1])
-
-    #simY = sim[[y2]]
-    #plt.plot(simX, simY, elem[2]+"x-", label="BER "+elem[1])
+    plt.plot(simX, simY, elem[2], label=elem[1])
 
 plt.xlabel(xlabel)
 plt.ylabel(ylabel)

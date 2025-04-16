@@ -15,6 +15,7 @@
 
 pthread_mutex_t fer_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t ber_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t frame_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #include "generate.h"
 #include "encoder.h"
@@ -202,8 +203,9 @@ void* routine(void* param) {
                 max_time[6] = ((cycles > max_time[6]) ? cycles : max_time[6]);
                 total_time_func += cycles;
     #endif
-    
+                pthread_muted_lock(&frame_mutex);
                 n_frame_simulated++;
+                pthread_muted_unlock(&frame_mutex);
             } while (n_frame_errors < f_max);
 	return NULL;
 }
