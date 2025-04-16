@@ -33,7 +33,46 @@ On doit un peu ré-arranger le code pour qu'il compile sans erreurs
 # Axe 2 - Optimize one blockwith SIMD
 
 ## Optimize modulator
+In order to optimize the modulator block, the original code is adapted to be used with neon SIMD functions. As a reminder, our modulator uses binary phase key shifting (BPSK) to transform a binary message to a symbol which is then converted to an integer value for transmission.
+```
+binary | symbol | integer
+   0  ->   1   ->    1
+   1  ->   0   ->   -1
+```
 
+Instead of parsing and converting the binary values one by one, the incoming binary codeword is treated 16 elements at a time by first loading 16 8-bit integers from memory into a vector. These 16 elements are then evaluated to determine whether they are a '1' or a '0' using the vectoral instruction `vcgtzq_s8`; the corresponding element in the 16-wide return vector is set to `0xFF = -1` if the input element was greater than 0, or to 0 otherwise. We can then manipulate this new vector by doubling it to create a difference of 2 between our two element types, and then adding one to shift these values, resulting in -1 or 1. This process is summarized below:
+```
+  in  | >0 ? |  x2  |  +1 
+  0  ->  0  ->  0  ->  1 
+  1  -> -1  -> -2  -> -1
+```
+
+It is of note that the input data type to the modulator is `uint8_t`, while the output is `int32_t`; the modulator must also convert each element from 8 to 32 bits. This process is facilitated using `vmovl` functions that allow for conversion between different width elements in SIMD. The complexity here, however, lies in the different length of each vector. Because the overall register size is constant, one SIMD register can only hold 4 32-bit integers. Therefore, four `int32x4_t` vectors are needed to hold the output produced by one `int8x16_t` vector. Additionnally, 2 16-element vectors are needed as intermediaries as the `vmovl` functions only provide conversion between adjacently sized vectors (8bit -> 16bit -> 32bit).
+
+Once the modulated message has successfully been transferred to the 32 bit vectors, the result can be stored to the destination 32bit array.
+
+Given that this implementation provides a third modulator option, the `--"mod-all-ones"` long option is replaced by `-o` which can take either `"mod-all-ones"` or `"mod-neon"`. If the `-o` option isn't used, the default, scalar BPSK modulator is used.
+
+**Testing**
+To test the functionality of the modulator, a simplified version of the simulator is used (`debug_func.c`) that allows for brief testing of the chain. This file also provides custom print statements to display both scalar and vectoral arrays in order to analyze the function at different point of execution. Displaying the array as it passed through the modulator exposed the issues surrounding the storage of the vector - which at first was attempted directly from the 8-bit vector to the 32-bit scalar array. The modulator was finally validated in comparing its output with the standard, scalar modulator:
+![alt text](mod_debug.png)
+
+**Performances**
+Simulated using:
+- random generator
+- standard repetition encoder, 256 reps
+- standard AWGN channel
+- scalar demodulator
+- float (scalar) decoder
+- standard monitor
+
+*Error rates* 
+![alt text](mod_perf.jpg)
+There is no difference in the error rates when using the neon and scalar modulator, as desired.
+
+*Block timing*
+![alt text](mod_time.jpg)
+The neon modulator is nearly 5x faster than its scalar counterpart.
 
 ## Optimize demodulator
 
