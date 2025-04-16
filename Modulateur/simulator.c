@@ -138,6 +138,7 @@ int main( int argc, char** argv) {
     uint8_t V_K[info_bits];// Decoded message
 
     uint64_t n_bit_errors, n_frame_errors, n_frame_simulated; // Frame and bit stats
+    uint64_t DEBUG_n_bit_errors, DEBUG_n_frame_errors; // TODO REMOVE
     double sigma; // Variance
     float SNR_better; // Es/N0 instead of Eb/N0
     float R = (float)info_bits/codeword_size; // Ratio - need to cast to float else rounds to ints
@@ -307,6 +308,8 @@ int main( int argc, char** argv) {
             begin_step = clock();
             #endif
             monitor_check_errors(U_K, V_K, info_bits, &n_bit_errors, &n_frame_errors);
+            monitor_neon (U_K, V_K, info_bits, &DEBUG_n_bit_errors, &DEBUG_n_frame_errors);
+            fprintf(stderr, "Normal found %i bit errors and %i frame errors - Neon  found %i bit errors and %i frame errors", n_bit_errors, n_frame_errors, DEBUG_n_bit_errors, DEBUG_n_frame_errors);
             #ifdef ENABLE_STATS
             end_step = clock(); 
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
