@@ -9,11 +9,11 @@ import pandas
 ## Files = (namefile, legend, print format)
 ## with print format being first the dot style (x, +, . ...) and then the line style (usually - for continuous or -- for dashed)
 files = [ 
-         ("sim_neon-soft.csv", "Neon monitor", "r"),
-         ("sim_normal-soft.csv", "Normal monitor", "b")
+         ("sim_demod.csv", "Neon demod", "r"),
+         ("sim_demodnor.csv", "Normal demod", "b")
 ]
 
-output = "monitor_upgrade_perfs"
+output = "demod perf"
 xlabel = "Signal to Noise Ratio (Eb/N0) (dB)"  
 ylabel = "Error Rate"
 x = "Eb/No"

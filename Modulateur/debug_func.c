@@ -83,14 +83,14 @@ int main() {
     int8_t L8N[N];
     uint8_t VN[K];
 
-    for (int i = 0; i < 1; i++)
+    for (int i = 0; i < 10; i++)
     {
         // float sigma=0;
         //  Generate message
         source_generate(UK, K);
-        printf("\nTableau genere : ");
-        print_array(UK, K);
-        printf("\n");
+        // printf("\nTableau genere : ");
+        // print_array(UK, K);
+        // printf("\n");
 
         // Encoded message
         encoder_repetition_encode(UK, CN, K, REPS);
@@ -115,11 +115,13 @@ int main() {
         print_array_float(LN, N);
         printf("\n");
 
+
         // Demodulated message
         modem_BPSK_demodulate_neon(YN, LN, N, 0.1);
-        printf("Tableau demodule neon: \n");
+        printf("Tableau demodule neon : \n");
         print_array_float(LN, N);
         printf("\n");
+    
 
         // convert to fixed point
         // quantizer_transform8(LN, L8N, N, 5, 3);
