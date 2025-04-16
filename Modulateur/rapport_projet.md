@@ -14,6 +14,22 @@ On join les threads après la boucle while et on les crée au début, APRES le r
 On a besoin de mettre les pointeurs de fonction en global pour les partager - pas un problème vu que c'est les mêmes pour tous les threads et non modifié
 On a 6 CPU : on va faire 6 threads
 
+On a du refaire tout le code à cause de comment c'était : on passe toutes les variables en global pour qu'on puisse y accéder dans la routine sans passage de param (impossible)
+Du coup on a testé qu'on n'a pas cassé le code avec une ancienne sim
+
+Ce qu'on a fait:
+Rajout d'un flag -t pour activer les threads
+Pas le choix du nombre, on en met 1 par core donc 6 en tout
+On déplace tout le do while dans une fonction qu'on appelle
+On join à chaque fois qu'on a atteint le nombre max d'erreurs, pour que le programme principal fasse les calculs et l'écriture dans un fichier
+Puis on re split pour le SNR suivant
+
+Pour les mutex : on les re-déclare en extern dans le monitor.h pour qu'il n'y ait pas d'erreur de compilation vu que ces fonctions les utilisent
+On limite le temps de prise de verrou au max (juste 1 lecture/écriture)
+
+On doit un peu ré-arranger le code pour qu'il compile sans erreurs
+
+
 # Axe 2 - Optimize one blockwith SIMD
 
 ## Optimize modulator
