@@ -75,6 +75,32 @@ There is no difference in the error rates when using the neon and scalar modulat
 The neon modulator is nearly 5x faster than its scalar counterpart.
 
 ## Optimize demodulator
+Similar to the modulator, a new version of the demodulator is proposed using vectorized instructions. The demodulator serves to normalize the noisy values coming out of the channel so that they sit in a similar range in that case that they need to be converted to fixed point. This is achieved by multiplying each element by 2/sigma^2, where the noise is proportionnal to sigma.
+
+The input and output of the demodulator are both floating point arrays because this step comes _before_ the values are decoded back to binary. Thus, in order to retain the noise value for an accurate decode, floating point vectors are used for the normalization calculation. 
+
+**Testing**
+Testing of the demodulator was performed the same as for the modulator, using the debug function to compare the vectorized demodulator with the original scalar version. 
+![alt text](demod_debug.png)
+
+**Performance**
+Simulated using:
+- random generator
+- standard repetition encoder, 256 reps
+- scalar modulator
+- standard AWGN channel
+- float (scalar) decoder
+- standard monitor
+
+*Errors rates*
+![alt text](demod_perf.jpg)
+There is no difference in the error rates when using the neon and scalar modulator, as desired.
+
+*Block timing*
+![alt text](demod_time.jpg)
+The vectorized version is slightly faster than the scalar demodulator, except for SNR 0. However, this SNR is an anomoly for both implementations, with a higher average time for both the scalar and vectorized versions. This may be explained by the fact that SNR 0 is the first SNR simulated which means that the very first frame occurs with this SNR. It is possible that there is a cache miss for the first frame to recover the demodulator code, which would be costly in terms of simulation time. In fact, this same phenomenom can be observed in the timing results for the modulator; the difference for SNR 0 is much less pronounced since the scale is more zoomed out with the two implementations having a much bigger offset.
+
+In terms of said offset, the gain in time with the neon instructions is significantly less than observed with modulator. This is not all that surprising, however, since the demodulator uses float vectors, which only hold 4 elements at a time, compared to the integer vectors used in the modulator (for the data manipulation part) that hold 16 elements. As such, the demodulator only treats 4 elements at a time, and though there is still a reduction in loop iterations, this reduction is much less significant than that of the modulator. Finally, the demodulator itself only consists of load, multiply, and store *floating point* operations, which are naturally more costly, especially in terms of arithmetic. This may contribute to the lack of gain with the neon instructions because floating point is used instead of previously seen integers.
 
 ## Optimize monitor
 We want to speed up the monitor block, by treating 16 elements at a time. We will use SIMD for that.
