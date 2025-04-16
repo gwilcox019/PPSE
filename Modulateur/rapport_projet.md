@@ -1,5 +1,10 @@
 # Axe 1 - Optimize with SIMD
 
+## Optimize modulator
+
+
+## Optimize demodulator
+
 ## Optimize monitor
 We want to speed up the monitor block, by treating 16 elements at a time. We will use SIMD for that.
 
