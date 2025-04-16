@@ -52,6 +52,24 @@ char filepath_stats[30] = {0};
 
 //Separate function used for threads
 void* routine(void* param) {
+        // Arrays & simulation parameters
+        uint8_t U_K[info_bits];     // Source message
+        uint8_t C_N[codeword_size]; // Repetition coded message
+        int32_t X_N[codeword_size]; // Modulated message
+        float Y_N[codeword_size];   // Received message after canal
+        float L_N[codeword_size];   // Demodulated message
+        int8_t L8_N[codeword_size]; // Demodulated message
+        uint8_t V_K[info_bits];     // Decoded message
+    
+        uint64_t n_bit_errors, n_frame_errors, n_frame_simulated; // Frame and bit stats
+        double sigma;                                             // Variance
+        float SNR_better;                                         // Es/N0 instead of Eb/N0
+        float R = (float)info_bits / codeword_size;               // Ratio - need to cast to float else rounds to ints
+        uint32_t n_reps = codeword_size / info_bits;              // Number of repetitions
+    
+        // Stats - computed after one loop
+        float ber, fer;
+
             // simulate this snr until we reach desired number of errors
             do
             {
@@ -311,24 +329,6 @@ int main(int argc, char **argv)
     if (e)
         return 1;
 
-    // Arrays & simulation parameters
-    uint8_t U_K[info_bits];     // Source message
-    uint8_t C_N[codeword_size]; // Repetition coded message
-    int32_t X_N[codeword_size]; // Modulated message
-    float Y_N[codeword_size];   // Received message after canal
-    float L_N[codeword_size];   // Demodulated message
-    int8_t L8_N[codeword_size]; // Demodulated message
-    uint8_t V_K[info_bits];     // Decoded message
-
-    uint64_t n_bit_errors, n_frame_errors, n_frame_simulated; // Frame and bit stats
-    double sigma;                                             // Variance
-    float SNR_better;                                         // Es/N0 instead of Eb/N0
-    float R = (float)info_bits / codeword_size;               // Ratio - need to cast to float else rounds to ints
-    uint32_t n_reps = codeword_size / info_bits;              // Number of repetitions
-
-    // Stats - computed after one loop
-    float ber, fer;
-
     // Output file
     FILE *file;
     if (filepath[0] == 0)
@@ -395,7 +395,7 @@ int main(int argc, char **argv)
 
         printf("current snr = %f, min snr = %f, max snr = %f, sigma = %f\n", val, min_SNR, max_SNR, sigma);
 
-        thread_t t0, t1, t2, t3, t4;
+        pthread_t t0, t1, t2, t3, t4;
         if (threads) {
             pthread_create(&t0, NULL, routine, NULL);
             pthread_create(&t1, NULL, routine, NULL);
@@ -403,7 +403,7 @@ int main(int argc, char **argv)
             pthread_create(&t3, NULL, routine, NULL);
             pthread_create(&t4, NULL, routine, NULL);
         }
-        routine();
+        routine(NULL);
         if (threads) {
             pthread_join(&t0, NULL);
             pthread_join(&t1, NULL);
