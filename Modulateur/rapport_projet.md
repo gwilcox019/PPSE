@@ -1,4 +1,18 @@
-# Axe 1 - Optimize with SIMD
+# Projet PPSE
+DEBRIE Maëla
+WILCOX Grace
+
+# Axe 1 - Speedup the whole chain
+## Using threads
+We will use mutex (locks) to avoid concurrent access on the frame error and bit error variables. Because we will run multiple threads at once, we might stop above `f_max` frames simulated.
+
+
+**todo rédiger**
+Changer le monitor pour qu'il prenne des verrous en paramètre
+Rajouter 2 verrous pour le count fer et le count ber (permet de pipeliner un peu)
+On join les threads après la boucle while et on les crée au début, APRES le reset de la variable (comme ca pas besoin de locks pour ca) 
+
+# Axe 2 - Optimize one blockwith SIMD
 
 ## Optimize monitor
 We want to speed up the monitor block, by treating 16 elements at a time. We will use SIMD for that.

@@ -10,13 +10,16 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <arm_neon.h>
-
+#include <pthread.h>
 //#include "debug_func.h"
 #include "generate.h"
 #include "encoder.h"
 #include "modulate.h"
 #include "decode.h"
 #include "monitor.h"
+
+pthread_mutex_t fer_mutex = PTHREAD_MUTEX_INITIALIZER; 
+pthread_mutex_t ber_mutex = PTHREAD_MUTEX_INITIALIZER; 
 
 int main( int argc, char** argv) {
     
@@ -62,15 +65,23 @@ int main( int argc, char** argv) {
     // The following argument is then stored in optarg variable
     int opt;
     //Loops while something to read
-    while ((opt = getopt_long(argc, argv, "m:M:s:e:K:N:D:f:o:c:", zero_opt, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "m:M:s:e:K:N:D:f:o:c:t", zero_opt, &long_index)) != -1) {
         switch(opt) {
+            //Minimum SNR
             case 'm': min_SNR = atof(optarg); break;
+            //Maximum SNR
             case 'M': if ((max_SNR = atof(optarg)) == 0) max_SNR = 12; break;
+            //Step between each SNR
             case 's': if ((step_val = atof(optarg)) == 0) step_val = 1; break;
+            //Number of frame error to get
             case 'e': if ((f_max = atoi(optarg)) == 0) f_max = 100; break;
+            //Number of info bits
             case 'K': if ((info_bits = atoi(optarg)) == 0) info_bits = 32; break;
+            //Number of bits in message sent
             case 'N': if ((codeword_size = atoi(optarg)) == 0) codeword_size = 128; break;
-	    case 'c': if (strcmp(optarg, "monitor-neon") == 0) monitor_fn = monitor_neon;  
+            //Monitor version to use
+	        case 'c': if (strcmp(optarg, "monitor-neon") == 0) monitor_fn = monitor_neon;  
+            //Decoder version to use
             case 'D':
                 if (strcmp(optarg, "rep-hard") == 0) {
                     use_fixed = 0;
@@ -89,7 +100,9 @@ int main( int argc, char** argv) {
                     decoder_fn_fixed = codec_repetition_soft_decode8_neon;
                 } 
                 break;
+            //Name of the file to store results in
             case 'f': sprintf(filepath, "sim_%s.csv", optarg); sprintf(filepath_stats, "sim_%s_stats.csv",optarg); break;
+            //Modulator function to use
             case 'o': 
                 if (strcmp(optarg, "mod-all-ones") == 0) {
                     modulate_fn = modem_BPSK_modulate_all_ones; 
@@ -97,22 +110,27 @@ int main( int argc, char** argv) {
                     modulate_fn = module_bpsk_modulate_neon;
                 }
                 break;
-            case 'z': //Check long
+            //Generator function to use - see long arg
+            case 'z': 
                 generate_fn = source_generate_all_zeros;
                 break;
+            //Demodulator function to use - see long arg
             case 'a': //Check long
                 demodulate_fn = modem_BPSK_demodulate_neon;
                 break;
+            //Number of "decimals" in quantisized value
             case 'g': //float
                 printf("DEBUG : qf called with argument %s\n", optarg);
                 use_fixed = 1;
                 f = atoi(optarg);
                 break;
+            //Total number of bits in quantisized value
             case 'h':
                 printf("DEBUG : qs called with argument %s\n", optarg);
                 // Using qs should do nothing if we didn't call qf -- no use_float = 1 here
                 s = atoi(optarg);
                 break;
+            case 't': 
         }
     }
 
