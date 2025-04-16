@@ -9,28 +9,29 @@ import pandas
 ## Files = (namefile, legend, print format)
 ## with print format being first the dot style (x, +, . ...) and then the line style (usually - for continuous or -- for dashed)
 files = [ 
-         ("sim_demod_stats.csv", "neon demod", "s-"),
-         ("sim_norm_stats.csv", "normal demod", "^-"),
-        # ("sim_hard_neon_stats.csv", "Neon", "x-")
+         ("sim_neon-soft.csv", "Neon monitor", "r"),
+         ("sim_normal-soft.csv", "Normal monitor", "b")
 ]
 
-output = "demod_simple_perf"
+output = "monitor_upgrade_perfs"
 xlabel = "Signal to Noise Ratio (Eb/N0) (dB)"  
-ylabel = "avg demod time"
+ylabel = "Error Rate"
 x = "Eb/No"
-y = "demodulate_avg"
+y1 = "FER"
+y2 = "BER"
 
 for elem in files:
     sim = pandas.read_csv(elem[0])
     simX = sim[[x]]
-    simY = sim[[y]]
-    print(simX, simY)
+    simY = sim[[y1]]
+    plt.plot(simX, simY, elem[2]+"o--", label="FER "+elem[1])
 
-    plt.plot(simX, simY, elem[2], label=elem[1])
+    simY = sim[[y2]]
+    plt.plot(simX, simY, elem[2]+"x-", label="BER "+elem[1])
 
 plt.xlabel(xlabel)
 plt.ylabel(ylabel)
-#plt.yscale("log")
+plt.yscale("log")
 plt.legend()
 plt.grid()
 plt.savefig(output+".jpg", format="jpg")

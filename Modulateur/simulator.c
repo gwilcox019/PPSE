@@ -39,6 +39,7 @@ int main( int argc, char** argv) {
     void (*generate_fn) (uint8_t*, size_t) = source_generate;
     void (*modulate_fn) (const uint8_t*, int32_t*, size_t) = module_bpsk_modulate;
     void (*demodulate_fn) (const float*, float*, size_t, float) = modem_BPSK_demodulate;
+    void (*monitor_fn) (const uint8_t*, const uint8_t *, size_t, uint64_t *, uint64_t *) = monitor_check_errors;
 
     //Filepaths where we store our stats
     char filepath[20] = {0};
@@ -61,7 +62,7 @@ int main( int argc, char** argv) {
     // The following argument is then stored in optarg variable
     int opt;
     //Loops while something to read
-    while ((opt = getopt_long(argc, argv, "m:M:s:e:K:N:D:f:o:", zero_opt, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "m:M:s:e:K:N:D:f:o:c:", zero_opt, &long_index)) != -1) {
         switch(opt) {
             case 'm': min_SNR = atof(optarg); break;
             case 'M': if ((max_SNR = atof(optarg)) == 0) max_SNR = 12; break;
@@ -69,6 +70,7 @@ int main( int argc, char** argv) {
             case 'e': if ((f_max = atoi(optarg)) == 0) f_max = 100; break;
             case 'K': if ((info_bits = atoi(optarg)) == 0) info_bits = 32; break;
             case 'N': if ((codeword_size = atoi(optarg)) == 0) codeword_size = 128; break;
+	    case 'c': if (strcmp(optarg, "monitor-neon") == 0) monitor_fn = monitor_neon;  
             case 'D':
                 if (strcmp(optarg, "rep-hard") == 0) {
                     use_fixed = 0;
@@ -305,7 +307,7 @@ int main( int argc, char** argv) {
             #ifdef ENABLE_STATS
             begin_step = clock();
             #endif
-            monitor_check_errors(U_K, V_K, info_bits, &n_bit_errors, &n_frame_errors);
+            monitor_fn(U_K, V_K, info_bits, &n_bit_errors, &n_frame_errors);
             #ifdef ENABLE_STATS
             end_step = clock(); 
             cycles = ((end_step-begin_step)*1000000)/CLOCKS_PER_SEC;
