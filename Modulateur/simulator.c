@@ -474,20 +474,19 @@ int main(int argc, char **argv)
         {
             avg_time[i] = (float)avg_time[i] / n_frame_simulated;
         }
-        printf("avg demod time: %f\n", avg_time[4]);
         for (int i = 0; i < 7; i++)
         {
             avg_thr[i] = (float)block_bits[i] / avg_time[i];
         }
 
         fprintf(file_stats, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", val,
-                avg_time[0], min_time[0], max_time[0], avg_thr[0], avg_time[0] * 100 / (total_time_func / n_frame_simulated),
-                avg_time[1], min_time[1], max_time[1], avg_thr[1], avg_time[1] * 100 / (total_time_func / n_frame_simulated),
-                avg_time[2], min_time[2], max_time[2], avg_thr[2], avg_time[2] * 100 / (total_time_func / n_frame_simulated),
-                avg_time[3], min_time[3], max_time[3], avg_thr[3], avg_time[3] * 100 / (total_time_func / n_frame_simulated),
-                avg_time[4], min_time[4], max_time[4], avg_thr[4], avg_time[4] * 100 / (total_time_func / n_frame_simulated),
-                avg_time[5], min_time[5], max_time[5], avg_thr[5], avg_time[5] * 100 / (total_time_func / n_frame_simulated),
-                avg_time[6], min_time[6], max_time[6], avg_thr[6], avg_time[6] * 100 / (total_time_func / n_frame_simulated));
+                avg_time[0], min_time[0], max_time[0], avg_thr[0], avg_time[0] * 100 / (average / n_frame_simulated),
+                avg_time[1], min_time[1], max_time[1], avg_thr[1], avg_time[1] * 100 / (average / n_frame_simulated),
+                avg_time[2], min_time[2], max_time[2], avg_thr[2], avg_time[2] * 100 / (average / n_frame_simulated),
+                avg_time[3], min_time[3], max_time[3], avg_thr[3], avg_time[3] * 100 / (average / n_frame_simulated),
+                avg_time[4], min_time[4], max_time[4], avg_thr[4], avg_time[4] * 100 / (average / n_frame_simulated),
+                avg_time[5], min_time[5], max_time[5], avg_thr[5], avg_time[5] * 100 / (average / n_frame_simulated),
+                avg_time[6], min_time[6], max_time[6], avg_thr[6], avg_time[6] * 100 / (average / n_frame_simulated));
         fflush(file_stats);
 #endif
 

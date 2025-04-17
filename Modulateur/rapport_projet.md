@@ -6,28 +6,36 @@ WILCOX Grace
 ## Using threads
 We will use mutex (locks) to avoid concurrent access on the frame error and bit error variables. Because we will run multiple threads at once, we might stop above `f_max` frames simulated.
 
+To speed up the whole chain, we decided to be mono-thread for the reading of the command line parameters. For each SNR, we then initialize Es/N0 and sigma, before creating threads. Those threads will all do the do-while loop with the whole simulation chain. They all share the same `n_frame_simulated` variable, and they will return when they detect the total number of simulated frames is above f_max. Note that it might be above that number because several threads execute at the same time.
+When all threads return, we then use the collected data to display the statistics in mono-thread.  
+Because the Nano has 6 cores, we will launch 5 threads plus the initial process, so 6 threads in total.
 
-**todo rédiger**
-Changer le monitor pour qu'il prenne des verrous en paramètre
-Rajouter 2 verrous pour le count fer et le count ber (permet de pipeliner un peu)
-On join les threads après la boucle while et on les crée au début, APRES le reset de la variable (comme ca pas besoin de locks pour ca) 
-On a besoin de mettre les pointeurs de fonction en global pour les partager - pas un problème vu que c'est les mêmes pour tous les threads et non modifié
-On a 6 CPU : on va faire 6 threads
+Because of the way C threads work, we had to totally rearrange our code:
+- A lot of our variables were made global. Because thread routines can't take arguments, that was the only way we could make our function pointers visible from one function (main) to another (routine).
+- Because some of those global variables are susceptible of being manipulated by several threads at the same time, we created mutex to protect access to those variables. In order to write one of those variables, one thread should first acquire the corresponding mutex, then edit the value, and then release the mutex. This guarantees exclusive access. The time spent with a lock is reduced to the minimum.
+  - To make those variables visible from the monitor function too (which manipulates the n_frame/bit_errors variables), we also declare mutex in this function, but as extern. That tells the compiler that those variables are guaranteed to exist, but defined in another file, that will later be linked together.
+  - We also need locks for time manipulation and block statistics. We tried using local variables to measure time spent in a block, but that doesn't seem to work.
+- The do-while loop is now in its own function, and that is the routine the threads will call upon creation.
+- The `clock()` function we were using up to now to measure time seemed to add up the time spent in all threads: even if we could see the execution was quicker, our measures would tell us that the threads were taking 6x longer to execute a function. We changed the function used to measure time to `clock_gettime()` using the `CLOCK_REALTIME` to adapt to that.
 
-On a du refaire tout le code à cause de comment c'était : on passe toutes les variables en global pour qu'on puisse y accéder dans la routine sans passage de param (impossible)
-Du coup on a testé qu'on n'a pas cassé le code avec une ancienne sim
+We also verified that our gestion of random was correct. We have only one random number generator, that all threads use. This way, when one thread polls a random number, the next thread polling a number from this same generator will not pull the same number.
 
-Ce qu'on a fait:
-Rajout d'un flag -t pour activer les threads
-Pas le choix du nombre, on en met 1 par core donc 6 en tout
-On déplace tout le do while dans une fonction qu'on appelle
-On join à chaque fois qu'on a atteint le nombre max d'erreurs, pour que le programme principal fasse les calculs et l'écriture dans un fichier
-Puis on re split pour le SNR suivant
+**Testing**
+Because we rearranged the whole code, we chose to use an earlier simulation to compare the performances. We then tested the code with and without threads to compare the performances.  
+At first, we could see that the execution time with threads was higher than without threads. We reduced the number of threads and displayed the elapsed time after each SNR to see where the problem came from. We then saw that the time for only 1 function, not including threads, was bigger with threads compared to without threads ; that's how we noticed that our measuring method couldn't work with threads.  
+To test our random generators, we displayed the generated frames and could see that they were different. We also tested the channel randomizer, by using the all ones modulator and printing the noisy output. We could also see that they were different.
+*Source test*
+![alt text](<random_source.jpg>)
+*Channel test*
+![alt text](<channel_random.jpg>)
 
-Pour les mutex : on les re-déclare en extern dans le monitor.h pour qu'il n'y ait pas d'erreur de compilation vu que ces fonctions les utilisent
-On limite le temps de prise de verrou au max (juste 1 lecture/écriture)
+**Performances**
+We first tested if our decoding performances were still correct. As mentionned, because we changed the structure of the code, we used an earlier simulation as a comparison point. We could see that both without and with threads had the same decoding performances as before, meaning our code is still correct.
+![correct](thread.jpg)
 
-On doit un peu ré-arranger le code pour qu'il compile sans erreurs
+We then compared the time spent for simulating one frame, as well as the throughput of one frame. Both went up for the thread version, although it is not 6 times faster, presumably because of the locks slowdown.
+![speed](thread_speed.jpg)
+![throughput](thread_throughput.jpg)
 
 
 # Axe 2 - Optimize one blockwith SIMD
@@ -83,7 +91,7 @@ The input and output of the demodulator are both floating point arrays because t
 Testing of the demodulator was performed the same as for the modulator, using the debug function to compare the vectorized demodulator with the original scalar version. 
 ![alt text](demod_debug.png)
 
-**Performance**
+**Performances**
 Simulated using:
 - random generator
 - standard repetition encoder, 256 reps
