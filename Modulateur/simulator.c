@@ -11,19 +11,25 @@
 #include <getopt.h>
 #include <arm_neon.h>
 #include <pthread.h>
-// #include "debug_func.h"
 
+//Unique and synchronous access to variables
 pthread_mutex_t fer_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t ber_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t frame_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t block0_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t block1_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t block2_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t block3_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t block4_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t block5_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t block6_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+// #include "debug_func.h"
 #include "generate.h"
 #include "encoder.h"
 #include "modulate.h"
 #include "decode.h"
 #include "monitor.h"
-
-
 
 // Global variables are necessary since we use threads - no parameters routine
 //  simulation parameters & default values
@@ -39,7 +45,7 @@ char use_fixed = 0;
 int f = 3;
 int s = 7;
 
-//Computation values
+// Computation values
 uint64_t n_bit_errors, n_frame_errors, n_frame_simulated; // Frame and bit stats
 double sigma;                                             // Variance
 float SNR_better;                                         // Es/N0 instead of Eb/N0
@@ -47,25 +53,23 @@ float R;                                                  // Ratio - need to cas
 uint32_t n_reps;                                          // Number of repetitions
 float ber, fer;                                           // Stats - computed after one loop
 
-    // Time computation
-    clock_t start_time, end_time; // total SNR sim time
-    float elapsed = 0;            // total time for 1 SNR sim (including all calculations)
-    float average = 0;            // average time per frame for 1 SNR sim
-    float sim_thr;                // throughput for 1 SNR sim (Mbps)
+// Time computation
+struct timespec start_time, end_time; // total SNR sim time
+int64_t elapsed = 0;            // total time for 1 SNR sim (including all calculations)
+float average = 0;            // average time per frame for 1 SNR sim
+float sim_thr;                // throughput for 1 SNR sim (Mbps)
 
-    // For random noise
+// For random noise
 
-    const gsl_rng_type *rangentype;
-    gsl_rng *rangen;
+const gsl_rng_type *rangentype;
+gsl_rng *rangen;
 // Per-block statistics
 #ifdef ENABLE_STATS
-    float min_time[7] = {-1};
-    float max_time[7] = {-1};
-    float avg_time[7] = {0};
-    float avg_thr[7] = {0};
-    float cycles = 0;
-    clock_t begin_step, end_step; // block time
-    float total_time_func = 0; // total time for 1 SNR sim NOT including calculations
+float min_time[7] = {-1};
+float max_time[7] = {-1};
+float avg_time[7] = {0};
+float avg_thr[7] = {0};
+float total_time_func = 0; // total time for 1 SNR sim NOT including calculations
 
 #endif
 
@@ -81,133 +85,164 @@ void (*monitor_fn)(const uint8_t *, const uint8_t *, size_t, uint64_t *, uint64_
 char filepath[20] = {0};
 char filepath_stats[30] = {0};
 
-//Separate function used for threads
-void* routine(void* param) {
-        // Arrays & simulation parameters
-        uint8_t U_K[info_bits];     // Source message
-        uint8_t C_N[codeword_size]; // Repetition coded message
-        int32_t X_N[codeword_size]; // Modulated message
-        float Y_N[codeword_size];   // Received message after canal
-        float L_N[codeword_size];   // Demodulated message
-        int8_t L8_N[codeword_size]; // Demodulated message
-        uint8_t V_K[info_bits];     // Decoded message
+// Separate function used for threads
+void *routine(void *param)
+{
+    // Arrays & simulation parameters
+    uint8_t U_K[info_bits];     // Source message
+    uint8_t C_N[codeword_size]; // Repetition coded message
+    int32_t X_N[codeword_size]; // Modulated message
+    float Y_N[codeword_size];   // Received message after canal
+    float L_N[codeword_size];   // Demodulated message
+    int8_t L8_N[codeword_size]; // Demodulated message
+    uint8_t V_K[info_bits];     // Decoded message
 
-            // simulate this snr until we reach desired number of errors
-            do
-            {
-    // SOURCE GEN - create frame
-    #ifdef ENABLE_STATS
-                begin_step = clock();
-    #endif
-                generate_fn(U_K, info_bits);
-    #ifdef ENABLE_STATS
-                end_step = clock();
-                cycles = ((end_step - begin_step) * 1000000) / CLOCKS_PER_SEC;
-                avg_time[0] += cycles;
-                min_time[0] = ((cycles < min_time[0]) ? cycles : min_time[0]);
-                max_time[0] = ((cycles > max_time[0]) ? cycles : max_time[0]);
-                total_time_func += cycles;
-    #endif
-    
-    // ENCODE - form codeword (repetitions)
-    #ifdef ENABLE_STATS
-                begin_step = clock();
-    #endif
-                encoder_repetition_encode(U_K, C_N, info_bits, n_reps);
-    #ifdef ENABLE_STATS
-                end_step = clock();
-                cycles = ((end_step - begin_step) * 1000000) / CLOCKS_PER_SEC;
-                avg_time[1] += cycles;
-                min_time[1] = ((cycles < min_time[1]) ? cycles : min_time[1]);
-                max_time[1] = ((cycles > max_time[1]) ? cycles : max_time[1]);
-                total_time_func += cycles;
-    #endif
-    
-    // MODULATE - convert to symbol
-    #ifdef ENABLE_STATS
-                begin_step = clock();
-    #endif
-                modulate_fn(C_N, X_N, codeword_size);
-    #ifdef ENABLE_STATS
-                end_step = clock();
-                cycles = ((end_step - begin_step) * 1000000) / CLOCKS_PER_SEC;
-                avg_time[2] += cycles;
-                min_time[2] = ((cycles < min_time[2]) ? cycles : min_time[2]);
-                max_time[2] = ((cycles > max_time[2]) ? cycles : max_time[2]);
-                total_time_func += cycles;
-    #endif
-    
-    // CHANNEL - add noise
-    #ifdef ENABLE_STATS
-                begin_step = clock();
-    #endif
-                channel_AGWN_add_noise(X_N, Y_N, codeword_size, sigma, rangen);
-    #ifdef ENABLE_STATS
-                end_step = clock();
-                cycles = ((end_step - begin_step) * 1000000) / CLOCKS_PER_SEC;
-                avg_time[3] += cycles;
-                min_time[3] = ((cycles < min_time[3]) ? cycles : min_time[0]);
-                max_time[3] = ((cycles > max_time[3]) ? cycles : max_time[0]);
-                total_time_func += cycles;
-    #endif
-    
-    // DEMODULATE - receive from channel
-    #ifdef ENABLE_STATS
-                begin_step = clock();
-    #endif
-                demodulate_fn(Y_N, L_N, codeword_size, sigma);
-    #ifdef ENABLE_STATS
-                end_step = clock();
-                cycles = ((end_step - begin_step) * 1000000) / CLOCKS_PER_SEC;
-                avg_time[4] += cycles;
-                min_time[4] = ((cycles < min_time[4]) ? cycles : min_time[0]);
-                max_time[4] = ((cycles > max_time[4]) ? cycles : max_time[0]);
-                total_time_func += cycles;
-    #endif
-    
-                // DECODE - recover message
-                if (use_fixed)
-                {
-                    quantizer_transform8(L_N, L8_N, codeword_size, s, f); // Quantizer
-    #ifdef ENABLE_STATS
-                    begin_step = clock(); // We don't want to take quantizer time into account
-    #endif
-                    decoder_fn_fixed(L8_N, V_K, info_bits, n_reps);
-                }
-                else
-                {
-    #ifdef ENABLE_STATS
-                    begin_step = clock();
-    #endif
-                    decoder_fn_float(L_N, V_K, info_bits, n_reps);
-                }
-    #ifdef ENABLE_STATS
-                end_step = clock();
-                cycles = ((end_step - begin_step) * 1000000) / CLOCKS_PER_SEC;
-                avg_time[5] += cycles;
-                min_time[5] = ((cycles < min_time[5]) ? cycles : min_time[0]);
-                max_time[5] = ((cycles > max_time[5]) ? cycles : max_time[0]);
-                total_time_func += cycles;
-    #endif
-    
-    // MONITOR - error check
-    #ifdef ENABLE_STATS
-                begin_step = clock();
-    #endif
-                monitor_fn(U_K, V_K, info_bits, &n_bit_errors, &n_frame_errors);
-    #ifdef ENABLE_STATS
-                end_step = clock();
-                cycles = ((end_step - begin_step) * 1000000) / CLOCKS_PER_SEC;
-                avg_time[6] += cycles;
-                min_time[6] = ((cycles < min_time[6]) ? cycles : min_time[6]);
-                max_time[6] = ((cycles > max_time[6]) ? cycles : max_time[6]);
-                total_time_func += cycles;
-    #endif
-                pthread_mutex_lock(&frame_mutex);
-                n_frame_simulated++;
-                pthread_mutex_unlock(&frame_mutex);
-            } while (n_frame_errors < f_max);
-	return NULL;
+#ifdef ENABLE_STATS
+
+    float cycles = 0;
+    clock_t begin_step, end_step; // block time
+#endif
+                                  // simulate this snr until we reach desired number of errors
+    do
+    {
+// SOURCE GEN - create frame
+#ifdef ENABLE_STATS
+        begin_step = clock();
+#endif
+        generate_fn(U_K, info_bits);
+#ifdef ENABLE_STATS
+        end_step = clock();
+        cycles = ((end_step - begin_step) * 1000000) / CLOCKS_PER_SEC;
+        pthread_mutex_lock(&block0_mutex);
+        avg_time[0] += cycles;
+        min_time[0] = ((cycles < min_time[0]) ? cycles : min_time[0]);
+        max_time[0] = ((cycles > max_time[0]) ? cycles : max_time[0]);
+        pthread_mutex_unlock(&block0_mutex);
+
+        total_time_func += cycles;
+#endif
+
+// ENCODE - form codeword (repetitions)
+#ifdef ENABLE_STATS
+        begin_step = clock();
+#endif
+        encoder_repetition_encode(U_K, C_N, info_bits, n_reps);
+#ifdef ENABLE_STATS
+        end_step = clock();
+        cycles = ((end_step - begin_step) * 1000000) / CLOCKS_PER_SEC;
+        pthread_mutex_lock(&block1_mutex);
+        avg_time[1] += cycles;
+        min_time[1] = ((cycles < min_time[1]) ? cycles : min_time[1]);
+        max_time[1] = ((cycles > max_time[1]) ? cycles : max_time[1]);
+        pthread_mutex_unlock(&block1_mutex);
+
+        total_time_func += cycles;
+#endif
+
+// MODULATE - convert to symbol
+#ifdef ENABLE_STATS
+        begin_step = clock();
+#endif
+        modulate_fn(C_N, X_N, codeword_size);
+#ifdef ENABLE_STATS
+        end_step = clock();
+        cycles = ((end_step - begin_step) * 1000000) / CLOCKS_PER_SEC;
+        pthread_mutex_lock(&block2_mutex);
+        avg_time[2] += cycles;
+        min_time[2] = ((cycles < min_time[2]) ? cycles : min_time[2]);
+        max_time[2] = ((cycles > max_time[2]) ? cycles : max_time[2]);
+        pthread_mutex_unlock(&block2_mutex);
+        total_time_func += cycles;
+#endif
+
+// CHANNEL - add noise
+#ifdef ENABLE_STATS
+        begin_step = clock();
+#endif
+        channel_AGWN_add_noise(X_N, Y_N, codeword_size, sigma, rangen);
+#ifdef ENABLE_STATS
+        end_step = clock();
+        cycles = ((end_step - begin_step) * 1000000) / CLOCKS_PER_SEC;
+        pthread_mutex_lock(&block3_mutex);
+        avg_time[3] += cycles;
+        min_time[3] = ((cycles < min_time[3]) ? cycles : min_time[0]);
+        max_time[3] = ((cycles > max_time[3]) ? cycles : max_time[0]);
+        pthread_mutex_unlock(&block3_mutex);
+        total_time_func += cycles;
+#endif
+
+// DEMODULATE - receive from channel
+#ifdef ENABLE_STATS
+        begin_step = clock();
+#endif
+        demodulate_fn(Y_N, L_N, codeword_size, sigma);
+#ifdef ENABLE_STATS
+        end_step = clock();
+        cycles = ((end_step - begin_step) * 1000000) / CLOCKS_PER_SEC;
+        pthread_mutex_lock(&block4_mutex);
+        avg_time[4] += cycles;
+        min_time[4] = ((cycles < min_time[4]) ? cycles : min_time[0]);
+        max_time[4] = ((cycles > max_time[4]) ? cycles : max_time[0]);
+        pthread_mutex_unlock(&block4_mutex);
+        total_time_func += cycles;
+#endif
+
+        // DECODE - recover message
+        if (use_fixed)
+        {
+            quantizer_transform8(L_N, L8_N, codeword_size, s, f); // Quantizer
+#ifdef ENABLE_STATS
+            begin_step = clock(); // We don't want to take quantizer time into account
+#endif
+            decoder_fn_fixed(L8_N, V_K, info_bits, n_reps);
+        }
+        else
+        {
+#ifdef ENABLE_STATS
+            begin_step = clock();
+#endif
+            decoder_fn_float(L_N, V_K, info_bits, n_reps);
+        }
+#ifdef ENABLE_STATS
+        end_step = clock();
+        cycles = ((end_step - begin_step) * 1000000) / CLOCKS_PER_SEC;
+        pthread_mutex_lock(&block5_mutex);
+        avg_time[5] += cycles;
+        min_time[5] = ((cycles < min_time[5]) ? cycles : min_time[0]);
+        max_time[5] = ((cycles > max_time[5]) ? cycles : max_time[0]);
+        pthread_mutex_unlock(&block5_mutex);
+        total_time_func += cycles;
+#endif
+
+// MONITOR - error check
+#ifdef ENABLE_STATS
+        begin_step = clock();
+#endif
+        monitor_fn(U_K, V_K, info_bits, &n_bit_errors, &n_frame_errors);
+#ifdef ENABLE_STATS
+        end_step = clock();
+        cycles = ((end_step - begin_step) * 1000000) / CLOCKS_PER_SEC;
+        pthread_mutex_lock(&block6_mutex);
+        avg_time[6] += cycles;
+        min_time[6] = ((cycles < min_time[6]) ? cycles : min_time[6]);
+        max_time[6] = ((cycles > max_time[6]) ? cycles : max_time[6]);
+        pthread_mutex_unlock(&block6_mutex);
+        total_time_func += cycles;
+#endif
+        pthread_mutex_lock(&frame_mutex);
+        n_frame_simulated++;
+        pthread_mutex_unlock(&frame_mutex);
+    } while (n_frame_errors < f_max);
+    return NULL;
+}
+
+
+//Measures the elapsed time im us
+//Code by Glärbo on StackOverflow (https://stackoverflow.com/questions/64893834/measuring-elapsed-time-using-clock-gettimeclock-monotonic)
+int64_t difftimespec_us(const struct timespec after, const struct timespec before)
+{
+    return ((int64_t)after.tv_sec - (int64_t)before.tv_sec) * (int64_t)1000000
+         + ((int64_t)after.tv_nsec - (int64_t)before.tv_nsec) / 1000;
 }
 
 int main(int argc, char **argv)
@@ -329,7 +364,7 @@ int main(int argc, char **argv)
             s = atoi(optarg);
             break;
         case 't':
-            threads=1;
+            threads = 1;
         }
     }
 
@@ -359,7 +394,7 @@ int main(int argc, char **argv)
         file = fopen(filepath, "w");
     fprintf(file, "Eb/No,Es/No,Sigma,# Bit Errors,# Frame Errors,# Simulated frames,BER,FER,Time for this SNR,Average time for one frame,SNR throughput\n");
 
-    #ifdef ENABLE_STATS
+#ifdef ENABLE_STATS
     FILE *file_stats;
     if (filepath_stats[0] == 0)
         file_stats = stdout;
@@ -367,17 +402,16 @@ int main(int argc, char **argv)
         file_stats = fopen(filepath_stats, "w");
     fprintf(file_stats, "Eb/No,gen_avg,gen_min,gen_max,gen_thr,gen_percent,encode_avg,encode_min,encode_max,encode_thr,encode_percent,bpsk_avg,bpsk_min,bpsk_max,bpsk_thr,bpsk_percent,awgn_avg,awgn_min,awgn_max,awgn_thr,awgn_percent,demodulate_avg,demodulate_min,demodulate_max,demodulate_thr,demodulate_percent,decode_avg,decode_min,decode_max,decode_thr,decode_percent,monitor_avg,monitor_min,monitor_max,monitor_thr,monitor_percent\n");
 
-        // blocks used :          source gen, encode,        modulate,      channel,       demodulate,    decode,    monitor
+    // blocks used :          source gen, encode,        modulate,      channel,       demodulate,    decode,    monitor
     uint32_t block_bits[7] = {info_bits, codeword_size, codeword_size, codeword_size, codeword_size, info_bits, info_bits}; // number of bits for each block
-    #endif
-    
-    //Init constants given out inputs
-    R = (float)info_bits / codeword_size;               // Ratio - need to cast to float else rounds to ints
-    n_reps = codeword_size / info_bits;              // Number of repetitions
+#endif
 
+    // Init constants given out inputs
+    R = (float)info_bits / codeword_size; // Ratio - need to cast to float else rounds to ints
+    n_reps = codeword_size / info_bits;   // Number of repetitions
 
     // Init random - for generation and normal law
-    srand(time(NULL)); // Initialization, should only be called once.    
+    srand(time(NULL)); // Initialization, should only be called once.
     rangentype = gsl_rng_default;
     rangen = gsl_rng_alloc(rangentype); // random number gen w uniform distr
 
@@ -389,7 +423,6 @@ int main(int argc, char **argv)
         sigma = sqrt(1 / (2 * pow(10, (SNR_better / 10))));
 
         // Reset stats
-        start_time = clock();
         n_bit_errors = 0;
         n_frame_errors = 0;
         n_frame_simulated = 0;
@@ -401,15 +434,15 @@ int main(int argc, char **argv)
             max_time[i] = -INFINITY;
             avg_time[i] = 0;
         }
-        
+
         total_time_func = 0;
 #endif
 
-
         printf("current snr = %f, min snr = %f, max snr = %f, sigma = %f\n", val, min_SNR, max_SNR, sigma);
-
+        clock_gettime(CLOCK_REALTIME, &start_time);
         pthread_t t0, t1, t2, t3, t4;
-        if (threads) {
+        if (threads)
+        {
             pthread_create(&t0, NULL, routine, NULL);
             pthread_create(&t1, NULL, routine, NULL);
             pthread_create(&t2, NULL, routine, NULL);
@@ -417,7 +450,8 @@ int main(int argc, char **argv)
             pthread_create(&t4, NULL, routine, NULL);
         }
         routine(NULL);
-        if (threads) {
+        if (threads)
+        {
             pthread_join(t0, NULL);
             pthread_join(t1, NULL);
             pthread_join(t2, NULL);
@@ -425,10 +459,10 @@ int main(int argc, char **argv)
             pthread_join(t4, NULL);
         }
 
-        //End stats
-        end_time = clock();
-        elapsed = (float)(end_time - start_time) * 1000000 / CLOCKS_PER_SEC; // microseconds
-        average = elapsed / n_frame_simulated;
+        // End stats
+        clock_gettime(CLOCK_REALTIME, &end_time);
+        elapsed = difftimespec_us(end_time, start_time);
+        average = (float)elapsed / (float)n_frame_simulated;
 
         fer = (float)n_frame_errors / n_frame_simulated;
         ber = (float)n_bit_errors / (n_frame_simulated * info_bits);
