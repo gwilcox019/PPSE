@@ -33,9 +33,74 @@ On doit un peu ré-arranger le code pour qu'il compile sans erreurs
 # Axe 2 - Optimize one blockwith SIMD
 
 ## Optimize modulator
+In order to optimize the modulator block, the original code is adapted to be used with neon SIMD functions. As a reminder, our modulator uses binary phase key shifting (BPSK) to transform a binary message to a symbol which is then converted to an integer value for transmission.
+```
+binary | symbol | integer
+   0  ->   1   ->    1
+   1  ->   0   ->   -1
+```
 
+Instead of parsing and converting the binary values one by one, the incoming binary codeword is treated 16 elements at a time by first loading 16 8-bit integers from memory into a vector. These 16 elements are then evaluated to determine whether they are a '1' or a '0' using the vectoral instruction `vcgtzq_s8`; the corresponding element in the 16-wide return vector is set to `0xFF = -1` if the input element was greater than 0, or to 0 otherwise. We can then manipulate this new vector by doubling it to create a difference of 2 between our two element types, and then adding one to shift these values, resulting in -1 or 1. This process is summarized below:
+```
+  in  | >0 ? |  x2  |  +1 
+  0  ->  0  ->  0  ->  1 
+  1  -> -1  -> -2  -> -1
+```
+
+It is of note that the input data type to the modulator is `uint8_t`, while the output is `int32_t`; the modulator must also convert each element from 8 to 32 bits. This process is facilitated using `vmovl` functions that allow for conversion between different width elements in SIMD. The complexity here, however, lies in the different length of each vector. Because the overall register size is constant, one SIMD register can only hold 4 32-bit integers. Therefore, four `int32x4_t` vectors are needed to hold the output produced by one `int8x16_t` vector. Additionnally, 2 16-element vectors are needed as intermediaries as the `vmovl` functions only provide conversion between adjacently sized vectors (8bit -> 16bit -> 32bit).
+
+Once the modulated message has successfully been transferred to the 32 bit vectors, the result can be stored to the destination 32bit array.
+
+Given that this implementation provides a third modulator option, the `--"mod-all-ones"` long option is replaced by `-o` which can take either `"mod-all-ones"` or `"mod-neon"`. If the `-o` option isn't used, the default, scalar BPSK modulator is used.
+
+**Testing**
+To test the functionality of the modulator, a simplified version of the simulator is used (`debug_func.c`) that allows for brief testing of the chain. This file also provides custom print statements to display both scalar and vectoral arrays in order to analyze the function at different point of execution. Displaying the array as it passed through the modulator exposed the issues surrounding the storage of the vector - which at first was attempted directly from the 8-bit vector to the 32-bit scalar array. The modulator was finally validated in comparing its output with the standard, scalar modulator:
+![alt text](mod_debug.png)
+
+**Performances**
+Simulated using:
+- random generator
+- standard repetition encoder, 256 reps
+- standard AWGN channel
+- scalar demodulator
+- float (scalar) decoder
+- standard monitor
+
+*Error rates* 
+![alt text](mod_perf.jpg)
+There is no difference in the error rates when using the neon and scalar modulator, as desired.
+
+*Block timing*
+![alt text](mod_time.jpg)
+The neon modulator is nearly 5x faster than its scalar counterpart.
 
 ## Optimize demodulator
+Similar to the modulator, a new version of the demodulator is proposed using vectorized instructions. The demodulator serves to normalize the noisy values coming out of the channel so that they sit in a similar range in that case that they need to be converted to fixed point. This is achieved by multiplying each element by 2/sigma^2, where the noise is proportionnal to sigma.
+
+The input and output of the demodulator are both floating point arrays because this step comes _before_ the values are decoded back to binary. Thus, in order to retain the noise value for an accurate decode, floating point vectors are used for the normalization calculation. 
+
+**Testing**
+Testing of the demodulator was performed the same as for the modulator, using the debug function to compare the vectorized demodulator with the original scalar version. 
+![alt text](demod_debug.png)
+
+**Performance**
+Simulated using:
+- random generator
+- standard repetition encoder, 256 reps
+- scalar modulator
+- standard AWGN channel
+- float (scalar) decoder
+- standard monitor
+
+*Errors rates*
+![alt text](demod_perf.jpg)
+There is no difference in the error rates when using the neon and scalar modulator, as desired.
+
+*Block timing*
+![alt text](demod_time.jpg)
+The vectorized version is slightly faster than the scalar demodulator, except for SNR 0. However, this SNR is an anomoly for both implementations, with a higher average time for both the scalar and vectorized versions. This may be explained by the fact that SNR 0 is the first SNR simulated which means that the very first frame occurs with this SNR. It is possible that there is a cache miss for the first frame to recover the demodulator code, which would be costly in terms of simulation time. In fact, this same phenomenom can be observed in the timing results for the modulator, though it is less pronounced since the scale is more zoomed out with the two implementations having a much bigger offset.
+
+In terms of said offset, the gain in time with the neon instructions is significantly less than observed with modulator. This is not all that surprising, however, since the demodulator uses float vectors, which only hold 4 elements at a time, compared to the integer vectors used in the modulator (for the data manipulation part) that hold 16 elements. As such, the demodulator only treats 4 elements at a time, and though there is still a reduction in loop iterations, this reduction is much less significant than that of the modulator. Finally, the demodulator itself only consists of load, multiply, and store *floating point* operations, which are naturally more costly, especially in terms of arithmetic. This may contribute to the lack of gain with the neon instructions because floating point is used instead of previously seen integer-based vectors.
 
 ## Optimize monitor
 We want to speed up the monitor block, by treating 16 elements at a time. We will use SIMD for that.
