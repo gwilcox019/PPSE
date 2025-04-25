@@ -12,13 +12,13 @@ types = ["hard", "soft_32", "soft_64", "soft_96", "soft_128"]
 
 files = [ 
          ("normal/sim_", "Normal - K = 32", "yx--"),
-         ("normal/big_k/sim_", "Normal - K = 128", "gx--"),
-         ("neon_demod/sim_", "Neon demodulator - K = 32", "r.-"),
-         ("neon_demod/big_k/sim_", "Neon demodulator - K = 128", "b.-"), 
+         #("normal/big_k/sim_", "Normal - K = 128", "gx--"),
+         ("neon_mod/sim_", "Neon modulator - K = 32", "r.-"),
+         #("neon_demod/big_k/sim_", "Neon demodulator - K = 128", "b.-"), 
 ]
 
 for t in types:
-    output = "FINAL GRAPHS/neon_demod/block throughput/"+t
+    output = "FINAL GRAPHS/neon_modul/block throughput/"+t
     xlabel = "Signal to Noise Ratio (Eb/N0) (dB)"  
     ylabel = "Demodulator throughput (Mbps)"
     x = "Eb/No"
