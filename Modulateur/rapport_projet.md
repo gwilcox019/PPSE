@@ -138,3 +138,8 @@ We can see that this new monitor does not affect the performances, meaning it de
 
 The time taken for the monitor is (most of the time) also reduced, as we can see on this graph:
 ![monitor_perfs](monitor_upgrade.jpg)
+
+# Overall performances
+In this paragraph, we will compare the performances of all our upgrades to the original version of the code. We will test it for K = 32 (as we did before) as well as for K = 128 to see if the output is different
+
+- We can see that K=128 has a higher FER, because more bits = more chances of having an error
