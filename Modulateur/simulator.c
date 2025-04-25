@@ -299,8 +299,10 @@ int main(int argc, char **argv)
             break;
         // Monitor version to use
         case 'c':
-            if (strcmp(optarg, "monitor-neon") == 0)
+            if (strcmp(optarg, "monitor-neon") == 0) {
+                printf("use of monitor neon\n");
                 monitor_fn = monitor_neon;
+            }
         // Decoder version to use
         case 'D':
             if (strcmp(optarg, "rep-hard") == 0)
@@ -341,7 +343,8 @@ int main(int argc, char **argv)
                 modulate_fn = modem_BPSK_modulate_all_ones;
             }
             else if (strcmp(optarg, "mod-neon") == 0)
-            {
+            {  
+                printf("use of mod neon\n");
                 modulate_fn = module_bpsk_modulate_neon;
             }
             break;
@@ -351,6 +354,7 @@ int main(int argc, char **argv)
             break;
         // Demodulator function to use - see long arg
         case 'a': // Check long
+            printf("Use of demod neon\n");
             demodulate_fn = modem_BPSK_demodulate_neon;
             break;
         // Number of "decimals" in quantisized value
@@ -364,6 +368,7 @@ int main(int argc, char **argv)
             s = atoi(optarg);
             break;
         case 't':
+            printf("use of threads\n");
             threads = 1;
         }
     }
@@ -438,7 +443,7 @@ int main(int argc, char **argv)
         total_time_func = 0;
 #endif
 
-        printf("current snr = %f, min snr = %f, max snr = %f, sigma = %f\n", val, min_SNR, max_SNR, sigma);
+        //printf("current snr = %f, min snr = %f, max snr = %f, sigma = %f\n", val, min_SNR, max_SNR, sigma);
         clock_gettime(CLOCK_REALTIME, &start_time);
         pthread_t t0, t1, t2, t3, t4;
         if (threads)
@@ -497,6 +502,7 @@ int main(int argc, char **argv)
                 ber, fer, elapsed, average, sim_thr);
         fflush(file);
     }
+    printf("ended\n");
     gsl_rng_free(rangen);
     pthread_mutex_destroy(&fer_mutex);
     pthread_mutex_destroy(&ber_mutex);
