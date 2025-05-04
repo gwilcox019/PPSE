@@ -47,6 +47,8 @@ float step_val = 1;
 uint32_t f_max = 100;
 uint32_t info_bits = 32;
 uint32_t codeword_size = 128;
+int K = info_bits;
+int N = codeword_size;
 
 // Parameters for fixed-point functions
 char use_fixed = 0;
@@ -54,7 +56,9 @@ int f = 3;
 int s = 7;
 
 // Parameters for bit packing
-char use_packing = 0; 
+char use_packing = 0;
+uint32_t pack_info_bits = info_bits/8;
+uint32_t pack_codeword_size = codeword_size/8; 
 
 // Computation values
 uint64_t n_bit_errors, n_frame_errors, n_frame_simulated; // Frame and bit stats
@@ -101,14 +105,14 @@ char filepath_stats[30] = {0};
 void *routine(void *param)
 {
     // Arrays & simulation parameters
-    uint8_t U_K[info_bits];     // Source message
-    uint8_t C_N[codeword_size]; // Repetition coded message
+    uint8_t U_K[K];             // Source message
+    uint8_t C_N[N];             // Repetition coded message
     int32_t X_N[codeword_size]; // Modulated message
     float Y_N[codeword_size];   // Received message after channel
     float L_N[codeword_size];   // Demodulated message
     int8_t L8_N[codeword_size]; // Demodulated message - fixed point 
     uint8_t V_K[info_bits];     // Decoded message
-    uint8_t P_K[info_bits];     // Decoded message repacked
+    uint8_t P_K[K];             // Decoded message repacked
 
 #ifdef ENABLE_STATS
 
@@ -122,10 +126,10 @@ void *routine(void *param)
 #ifdef ENABLE_STATS
         begin_step = clock();
 #endif
-        generate_fn(U_K, info_bits);
+        generate_fn(U_K, K);
         printf("array gen : ");
-        print_array(U_K, info_bits);
-        printf("/n");
+        print_array(U_K, K);
+        printf("\n");
 #ifdef ENABLE_STATS
         end_step = clock();
         cycles = ((end_step - begin_step) * 1000000) / CLOCKS_PER_SEC;
@@ -142,7 +146,7 @@ void *routine(void *param)
 #ifdef ENABLE_STATS
         begin_step = clock();
 #endif
-        encoder_fn(U_K, C_N, info_bits, n_reps);
+        encoder_fn(U_K, C_N, K, n_reps);
 #ifdef ENABLE_STATS
         end_step = clock();
         cycles = ((end_step - begin_step) * 1000000) / CLOCKS_PER_SEC;
@@ -230,10 +234,10 @@ void *routine(void *param)
         total_time_func += cycles;
 #endif
         if (use_packing) {
-            bit_packer(V_K, P_K, info_bits);
+            bit_packer(V_K, P_K, K);
             printf("array recovered : ");
-            print_array(P_K, info_bits);
-            printf("/n");
+            print_array(P_K, K);
+            printf("\n");
         }
 
 // MONITOR - error check
@@ -241,7 +245,7 @@ void *routine(void *param)
         begin_step = clock();
 #endif
         if (use_packing) {
-            monitor_fn(U_K, P_K, info_bits, &n_bit_errors, &n_frame_errors);
+            monitor_fn(U_K, P_K, info_bits/8, &n_bit_errors, &n_frame_errors);
         } else {
             monitor_fn(U_K, V_K, info_bits, &n_bit_errors, &n_frame_errors);
         }
@@ -410,6 +414,14 @@ int main(int argc, char **argv)
         generate_fn = source_gen_bit_pack;
         encoder_fn = encoder_rep_encode_bit_pack;
         modulate_fn = module_bpsk_modulate_bit_unpack;
+    }
+
+    if (use_packing) {
+        K = pack_info_bits;
+        N = pack_codeword_size;
+    } else {
+        K = info_bits;
+        N = codeword_size;
     }
 
     // check s and f values

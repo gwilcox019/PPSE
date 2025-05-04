@@ -22,7 +22,6 @@ void codec_repetition_hard_decode (const float* L_N, uint8_t* V_N, size_t k, siz
 
 // converts decoded back to packed bit -> call this after decode for bit packing
 void bit_packer (const uint8_t* V_N, uint8_t* P_N, size_t k) {
-    k=k/8;
     for (int i=0; i<k; i++) { 
         P_N[i] = 0;
         for (int j=7; j>=0; j--) {

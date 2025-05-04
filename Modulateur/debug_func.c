@@ -97,7 +97,7 @@ int main() {
     gsl_rng * rangen = gsl_rng_alloc (rangentype); // random number gen w uniform distr 
 
     size_t K = 32, N = 64, REPS = 2;
-    uint8_t UK[K], CN[N], PN[K];
+    uint8_t UK[K/8], CN[N/8], PN[K/8];
     int32_t XN[N];
     float YN[N], LN[N];
     int8_t L8N[N];
@@ -108,7 +108,7 @@ int main() {
         // float sigma=0;
         //  Generate message
         //source_generate(UK, K);
-        source_gen_bit_pack(UK,K);
+        source_gen_bit_pack(UK,K/8);
          printf("\nTableau genere : ");
          print_array(UK, K/8);
          printf("\nbinary : ");
@@ -117,7 +117,7 @@ int main() {
 
         // Encoded message
         //encoder_repetition_encode(UK, CN, K, REPS);
-        encoder_rep_encode_bit_pack(UK,CN,K,REPS);
+        encoder_rep_encode_bit_pack(UK,CN,K/8,REPS);
          printf("\nTableau encode : ");
          print_array(CN, N/8);
          printf("\nbinary : ");
@@ -163,7 +163,7 @@ int main() {
          printf("\n");
 
 
-        bit_packer(VN, PN, K);
+        bit_packer(VN, PN, K/8);
         printf("\nTableau repacked : ");
          print_array(PN, K/8);
         printf("\n__________\n");
