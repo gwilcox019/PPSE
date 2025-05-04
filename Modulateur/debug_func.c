@@ -10,19 +10,19 @@ void print_array_binary(void const * const ptr, size_t const size)
     
     printf("[ ");
     for (i = 0; i < size; i++) {
+        printf("\n\t");
         for (j = 7; j >= 0; j--) {
             byte = (b[i] >> j) & 1;
             printf("%u ; ", byte);
         }
-        printf("\n");
     }
     printf("]");
 }
 
 void print_array (uint8_t* array, size_t size) {
-    printf("[");
+    printf("[ ");
     for (int i=0; i<size; i++) {
-        if (i%8 == 0) printf("\n");
+        if (i%8 == 0 && i!=0) printf("\n");
         printf("%d ; ", array[i]);
     }
     printf("]");
@@ -127,7 +127,7 @@ int main() {
         // Modulated message
         //module_bpsk_modulate(CN, XN, N);
         module_bpsk_modulate_bit_unpack(CN, XN, N);
-        printf("\nTableau module : \n");
+        printf("\nTableau module : ");
         print_array_32(XN, N);
         printf("\n");
 
@@ -158,7 +158,7 @@ int main() {
 
         // printf("Tableau soft dec NORMAL: \n");
          codec_repetition_soft_decode(LN, VN, K, REPS);
-         printf("tableau decode : \n");
+         printf("\nTableau decode : ");
          print_array(VN,K);
          printf("\n");
 
