@@ -22,7 +22,7 @@ files = [
 #for t in types:
     #output = "FINAL GRAPHS/neon_modul/block throughput/"+t
 xlabel = "Signal to Noise Ratio (Eb/N0) (dB)"  
-ylabel = "Average block time"
+ylabel = "Average block time (us)"
     #"Demodulator throughput (Mbps)"
 x = "Eb/No"
 y1 = "gen_avg"

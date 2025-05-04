@@ -124,9 +124,6 @@ void *routine(void *param)
         begin_step = clock();
 #endif
         generate_fn(U_K, K);
-//        printf("array gen : ");
-//        print_array(U_K, K);
-//        printf("\n");
 #ifdef ENABLE_STATS
         end_step = clock();
         cycles = ((end_step - begin_step) * 1000000) / CLOCKS_PER_SEC;
@@ -232,9 +229,6 @@ void *routine(void *param)
 #endif
         if (use_packing) {
             bit_packer(V_K, P_K, K);
- //           printf("array recovered : ");
- //           print_array(P_K, K);
- //           printf("\n");
         }
 
 // MONITOR - error check
