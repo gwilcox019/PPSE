@@ -6,11 +6,9 @@ void module_bpsk_modulate (const uint8_t* CN, int32_t* XN, size_t n) {
 }
 
 void module_bpsk_modulate_bit_unpack (const uint8_t* CN, int32_t* XN, size_t n) {
-    int N; // number of elements in XN
-    for (; n>0; n--) { // for each element of CN
-        N = 8*n;
+    for (; n>0; n=n-8) { // for each element of CN
         for (int i=0; i<8; i++) { // for each bit of this element of CN
-            XN[N-1-i] = ((CN[n-1] & (1<<i)) ? -1:1); // check bit i of CN
+            XN[n-1-i] = ((CN[n/8-1] & (1<<i)) ? -1:1); // check bit i of CN
         }
     } 
 }

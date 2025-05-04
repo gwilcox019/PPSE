@@ -108,7 +108,7 @@ int main() {
         // float sigma=0;
         //  Generate message
         //source_generate(UK, K);
-        source_gen_bit_pack(UK,K/8);
+        source_gen_bit_pack(UK,K);
          printf("\nTableau genere : ");
          print_array(UK, K/8);
          printf("\nbinary : ");
@@ -117,7 +117,7 @@ int main() {
 
         // Encoded message
         //encoder_repetition_encode(UK, CN, K, REPS);
-        encoder_rep_encode_bit_pack(UK,CN,K/8,REPS);
+        encoder_rep_encode_bit_pack(UK,CN,K,REPS);
          printf("\nTableau encode : ");
          print_array(CN, N/8);
          printf("\nbinary : ");
@@ -126,7 +126,7 @@ int main() {
 
         // Modulated message
         //module_bpsk_modulate(CN, XN, N);
-        module_bpsk_modulate_bit_unpack(CN, XN, N/8);
+        module_bpsk_modulate_bit_unpack(CN, XN, N);
         printf("\nTableau module : \n");
         print_array_32(XN, N);
         printf("\n");
@@ -163,7 +163,7 @@ int main() {
          printf("\n");
 
 
-        bit_packer(VN, PN, K/8);
+        bit_packer(VN, PN, K);
         printf("\nTableau repacked : ");
          print_array(PN, K/8);
         printf("\n__________\n");

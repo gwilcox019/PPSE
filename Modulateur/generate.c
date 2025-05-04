@@ -6,6 +6,7 @@ void source_generate(uint8_t* UK, size_t k) {
 }
 
 void source_gen_bit_pack(uint8_t* UK, size_t k) {
+    k = k/8;
     for (; k>0; k--) UK[k-1] = rand(); 
 }
 

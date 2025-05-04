@@ -24,7 +24,6 @@ pthread_mutex_t block4_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t block5_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t block6_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-// #include "debug_func.h"
 #include "generate.h"
 #include "encoder.h"
 #include "modulate.h"
@@ -44,6 +43,9 @@ uint32_t codeword_size = 128;
 char use_fixed = 0;
 int f = 3;
 int s = 7;
+
+// Parameters for bit packing
+char use_packing = 0;
 
 // Computation values
 uint64_t n_bit_errors, n_frame_errors, n_frame_simulated; // Frame and bit stats
@@ -80,6 +82,7 @@ void (*generate_fn)(uint8_t *, size_t) = source_generate;
 void (*modulate_fn)(const uint8_t *, int32_t *, size_t) = module_bpsk_modulate;
 void (*demodulate_fn)(const float *, float *, size_t, float) = modem_BPSK_demodulate;
 void (*monitor_fn)(const uint8_t *, const uint8_t *, size_t, uint64_t *, uint64_t *) = monitor_check_errors;
+void (*encoder_fn)(const uint8_t*, uint8_t*, size_t, size_t) = encoder_repetition_encode;
 
 // Filepaths where we store our stats
 char filepath[20] = {0};
@@ -92,10 +95,11 @@ void *routine(void *param)
     uint8_t U_K[info_bits];     // Source message
     uint8_t C_N[codeword_size]; // Repetition coded message
     int32_t X_N[codeword_size]; // Modulated message
-    float Y_N[codeword_size];   // Received message after canal
+    float Y_N[codeword_size];   // Received message after channel
     float L_N[codeword_size];   // Demodulated message
-    int8_t L8_N[codeword_size]; // Demodulated message
+    int8_t L8_N[codeword_size]; // Demodulated message - fixed point 
     uint8_t V_K[info_bits];     // Decoded message
+    uint8_t P_K[info_bits];     // Decoded message repacked
 
 #ifdef ENABLE_STATS
 
@@ -213,12 +217,19 @@ void *routine(void *param)
         pthread_mutex_unlock(&block5_mutex);
         total_time_func += cycles;
 #endif
+        if (use_packing) {
+            bit_packer(V_K, P_K, info_bits);
+        }
 
 // MONITOR - error check
 #ifdef ENABLE_STATS
         begin_step = clock();
 #endif
-        monitor_fn(U_K, V_K, info_bits, &n_bit_errors, &n_frame_errors);
+        if (use_packing) {
+            monitor_fn(U_K, P_K, info_bits, &n_bit_errors, &n_frame_errors);
+        } else {
+            monitor_fn(U_K, V_K, info_bits, &n_bit_errors, &n_frame_errors);
+        }
 #ifdef ENABLE_STATS
         end_step = clock();
         cycles = ((end_step - begin_step) * 1000000) / CLOCKS_PER_SEC;
@@ -264,7 +275,7 @@ int main(int argc, char **argv)
     // The following argument is then stored in optarg variable
     int opt;
     // Loops while something to read
-    while ((opt = getopt_long(argc, argv, "m:M:s:e:K:N:D:f:o:c:t", zero_opt, &long_index)) != -1)
+    while ((opt = getopt_long(argc, argv, "m:M:s:e:K:N:D:f:o:c:t:p", zero_opt, &long_index)) != -1)
     {
         switch (opt)
         {
@@ -367,10 +378,23 @@ int main(int argc, char **argv)
             // Using qs should do nothing if we didn't call qf -- no use_float = 1 here
             s = atoi(optarg);
             break;
+        // threading
         case 't':
             printf("use of threads\n");
             threads = 1;
+            break;
+        // bit packing
+        case 'p':
+            printf("bit packing enabled - generate and modulate function selection ignored\n");
+            use_packing = 1;
         }
+    }
+
+    // if using bit packing, have to use special modulator (can use any demod tho)
+    if (use_packing) {
+        generate_fn = source_gen_bit_pack;
+        encoder_fn = encoder_rep_encode_bit_pack;
+        modulate_fn = module_bpsk_modulate_bit_unpack;
     }
 
     // check s and f values
@@ -411,7 +435,7 @@ int main(int argc, char **argv)
     uint32_t block_bits[7] = {info_bits, codeword_size, codeword_size, codeword_size, codeword_size, info_bits, info_bits}; // number of bits for each block
 #endif
 
-    // Init constants given out inputs
+    // Init constants given our inputs
     R = (float)info_bits / codeword_size; // Ratio - need to cast to float else rounds to ints
     n_reps = codeword_size / info_bits;   // Number of repetitions
 

@@ -9,6 +9,7 @@ void encoder_repetition_encode(const uint8_t* UK, uint8_t* CN, size_t k, size_t 
 
 void encoder_rep_encode_bit_pack(const uint8_t* UK, uint8_t* CN, size_t k, size_t reps) {
     int n;
+    k = k/8;
     for (int i=0; i<reps; i++) {
         n = i*k;
         for (int j=0; j<k; j++) {
