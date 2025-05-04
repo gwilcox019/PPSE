@@ -5,7 +5,7 @@ WILCOX Grace
 # Preliminary note
 We tested our code with both K=32 and K=128. On the graph, we were able to see that while the BER remained unchanged, the FER was affected by this modification, for our reference point as well as our optimized code. This is because one bit error only leads to one frame error, no matter the number of information bits. This means that for K=32, we have 32 chances of getting a bit error, while for K=128, we have 4 times more chances of having a bit error, leading to an increased frame error rate.
 
-We also noted that our throughputs, global or per block, could greatly vary from one SNR to the next, leading to unclear results. While most of the time, we do have better throughput in our optimized versions, we decided it was more obvious to plot graphs based on the average time for the block / simulation chain instead of the throughput. Throughput data can still be found in the .csv files if so desired.
+We also noted that our throughputs, global or per block, could greatly vary from one SNR to the next, leading to unclear results. While most of the time, we do have better throughput in our optimized versions, we decided it was more obvious to plot graphs based on the average time for the block / simulation chain instead of the throughput, so we reference those plots in this report. Throughput data can still be found in the .csv files and plotted in the `FINAL PLOTS` folder if so desired.
 
 # Axe 1 - Speedup the whole chain
 ## Using threads
@@ -174,6 +174,8 @@ Simulated using:
 - standard monitor
 
 *Error rates*
+![bitpack_perf](bitpack_perf.jpg)
+The error rates remain unchanged when using bit packing, as desired.
 
 *Block timing*
 ![bitpack_time](bitpack_time.jpg)

@@ -30,15 +30,6 @@ pthread_mutex_t block6_mutex = PTHREAD_MUTEX_INITIALIZER;
 #include "decode.h"
 #include "monitor.h"
 
-void print_array (uint8_t* array, size_t size) {
-    printf("[");
-    for (int i=0; i<size; i++) {
-        if (i%8 == 0) printf("\n");
-        printf("%d ; ", array[i]);
-    }
-    printf("]");
-}
-
 // Global variables are necessary since we use threads - no parameters routine
 //  simulation parameters & default values
 float min_SNR = 0;
@@ -72,7 +63,6 @@ float average = 0;            // average time per frame for 1 SNR sim
 float sim_thr;                // throughput for 1 SNR sim (Mbps)
 
 // For random noise
-
 const gsl_rng_type *rangentype;
 gsl_rng *rangen;
 // Per-block statistics
@@ -82,7 +72,6 @@ float max_time[7] = {-1};
 float avg_time[7] = {0};
 float avg_thr[7] = {0};
 float total_time_func = 0; // total time for 1 SNR sim NOT including calculations
-
 #endif
 
 // Function pointers to easily change the function used
@@ -102,6 +91,7 @@ char filepath_stats[30] = {0};
 void *routine(void *param)
 {
     // Arrays & simulation parameters
+    // K, N used for variable length depending on bit packing or not
     uint8_t U_K[K];             // Source message
     uint8_t C_N[N];             // Repetition coded message
     int32_t X_N[codeword_size]; // Modulated message
@@ -116,7 +106,7 @@ void *routine(void *param)
     float cycles = 0;
     clock_t begin_step, end_step; // block time
 #endif
-                                  // simulate this snr until we reach desired number of errors
+// simulate this snr until we reach desired number of errors
     do
     {
 // SOURCE GEN - create frame
