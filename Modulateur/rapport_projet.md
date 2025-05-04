@@ -26,15 +26,18 @@ Because of the way C threads work, we had to totally rearrange our code:
 We also verified that our gestion of random was correct. We have only one random number generator, that all threads use. This way, when one thread polls a random number, the next thread polling a number from this same generator will not pull the same number.
 
 **Testing**
+
 Because we rearranged the whole code, we chose to use an earlier simulation to compare the performances. We then tested the code with and without threads to compare the performances.  
 At first, we could see that the execution time with threads was higher than without threads. We reduced the number of threads and displayed the elapsed time after each SNR to see where the problem came from. We then saw that the time for only 1 function, not including threads, was bigger with threads compared to without threads ; that's how we noticed that our measuring method couldn't work with threads, causing us to switch time functions.  
 To test our random generators, we displayed the generated frames and could see that they were different. We also tested the channel randomizer, by using the all ones modulator and printing the noisy output. We could also see that they were different.
+
 *Source test*
 ![alt text](<random_source.jpg>)
 *Channel test*
 ![alt text](<channel_random.jpg>)
 
 **Performances**
+
 We first tested if our decoding performances were still correct. As mentionned, because we changed the structure of the code, we used an earlier simulation as a comparison point. We could see that both without and with threads had the same decoding performances as before, meaning our code is still correct.
 ![correct](<FINAL GRAPHS/threads/error/hard.jpg>)
 
@@ -67,10 +70,12 @@ Once the modulated message has successfully been transferred to the 32 bit vecto
 Given that this implementation provides a third modulator option, the `--"mod-all-ones"` long option is replaced by `-o` which can take either `"mod-all-ones"` or `"mod-neon"`. If the `-o` option isn't used, the default, scalar BPSK modulator is used.
 
 **Testing**
+
 To test the functionality of the modulator, a simplified version of the simulator is used (`debug_func.c`) that allows for brief testing of the chain. This file also provides custom print statements to display both scalar and vectoral arrays in order to analyze the function at different point of execution. Displaying the array as it passed through the modulator exposed the issues surrounding the storage of the vector - which at first was attempted directly from the 8-bit vector to the 32-bit scalar array. The modulator was finally validated in comparing its output with the standard, scalar modulator:
 ![alt text](mod_debug.png)
 
 **Performances**
+
 Simulated using:
 - random generator
 - standard repetition encoder, 256 reps
@@ -95,10 +100,12 @@ The input and output of the demodulator are both floating point arrays because t
 To use the SIMD demodulator, a long option `--demod-neon` is added. If not used, the default, scalar demodulator is kept.
 
 **Testing**
+
 Testing of the demodulator was performed the same as for the modulator, using the debug function to compare the vectorized demodulator with the original scalar version. 
 ![alt text](demod_debug.png)
 
 **Performances**
+
 Simulated using:
 - random generator
 - standard repetition encoder, 256 reps
@@ -133,6 +140,7 @@ If we have at least 1 error and we didn't yet add 1 to the frame error count (we
 We can use this variation using the command line, with the option `-c "monitor-neon"`
 
 **Testing**
+
 To test this monitor, we first use both monitors simultaneously: we add another set of variables to count the number of bit/frame errors, and we count the errors on a frame with both functions at the same time. They should produce the same results.
 
 We first had an issue because we forgot to set those new variables to 0 before every SNR, so the values were different. Then, we had an error because we thought that equal values returned 0 in the result array, and different ones would be 1 ; but that was not the case, so we adapted the code.  
@@ -140,6 +148,7 @@ After that, we could see that both our monitors produced the same results:
 ![alt text](monitor_debug.png)
 
 **Performances**
+
 We can see that this new monitor does not affect the performances, meaning it decodes well:
 ![monitor_perfs](<FINAL GRAPHS/neon_monitor/error/hard.jpg>)
 
@@ -150,21 +159,26 @@ The time taken for the monitor is (most of the time) also reduced, as we can see
 Given that the simulation chain uses 1-bit data (other than when working with the noise of the channel), it is unnecessary to use a full byte for each piece of data. In order to reduce both time and memory usage, the generator, encoder, and modulator are all modified to support bit-packing, where data is treated 1 bit at a time - even though it is still stored in bytes (uint8_t). We note that all three of these new implementations use scalar (not SIMD) functions.
 
 *Generator*
+
 A new bit-packing version of the random number generator is added that does not use parity to reduce the value generated to 1 or 0. Already this is much more efficient, utilising all 8 bits of each array element, and reducing the computional load of the function significantly by omitting the modulo calculation. Additionally, this function only needs to produce 8 times less random numbers to provide the same amount of data as the original. This is not explicit in the function, but instead is evident in its usage in `simulator.c`.
 
 *Encoder*
+
 Like the generator, the encoder did not require much changing (or really any at all), because it essentially always does the same thing: repeat the given array as many times as necessary. However, a different version of the function was supplied to avoid the use of the modulo operator (at the price of using another for loop). The real gain from this new version of the encoder, however, again comes from its usage; it treats arrays 8 times smaller because of the higher information density from the bit packing, and therefore iterates less times.
 
 *Modulator*
+
 Upon exiting the modulator, the frame needs to be in a usable format for the channel - not bit-packed. Therefore, a new modulator is proposed that unpacks the condensed format codeword while modulating it. This involves a nested for loop in order to treat each bit of each element of the input array, using shifted bit masking to extract the desired bit. The modulation is still BPSK, converting 0 to 1 and 1 to -1.
 
 In order to use this in the full simulation chain, the final decoded frame needs to be repacked to properly compare it with the generator frame in the monitor. The function `bit_packer` in `decode.c` uses shifting and bitwise OR to place each element of the decoded frame into a bit-packed output. Lastly, integrating this optimization into our simulation chain involved adding a command line option `-p` that ensures that the bit-packed generator, decoder, and modulator are used, even if other, conflicting command line options are selected. Any demodulator and decoder can be used, and the bit-packer is added at the end before passing the final frame to the monitor. New logic was also added to reduce the size of the generated (U_K) and encoded (C_N) frame arrays on declaration.
 
 **Testing**
+
 Once again, the simplified simulation chain `debug_func.c` was used to test each of the new functions proposed. A binary print function was added to facilitate testing of the packed-format and to easily compare with the modulated (unpacked) versions. 
 ![bitpack_debug](bitpack_debug.png)
 
 **Performances**
+
 Simulated using:
 - bit packed generator
 - bit packed encoder, 4 repetitions
