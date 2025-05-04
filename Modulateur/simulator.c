@@ -30,6 +30,15 @@ pthread_mutex_t block6_mutex = PTHREAD_MUTEX_INITIALIZER;
 #include "decode.h"
 #include "monitor.h"
 
+void print_array (uint8_t* array, size_t size) {
+    printf("[");
+    for (int i=0; i<size; i++) {
+        if (i%8 == 0) printf("\n");
+        printf("%d ; ", array[i]);
+    }
+    printf("]");
+}
+
 // Global variables are necessary since we use threads - no parameters routine
 //  simulation parameters & default values
 float min_SNR = 0;
@@ -114,6 +123,9 @@ void *routine(void *param)
         begin_step = clock();
 #endif
         generate_fn(U_K, info_bits);
+        printf("array gen : ");
+        print_array(U_K, info_bits);
+        printf("/n");
 #ifdef ENABLE_STATS
         end_step = clock();
         cycles = ((end_step - begin_step) * 1000000) / CLOCKS_PER_SEC;
@@ -219,6 +231,9 @@ void *routine(void *param)
 #endif
         if (use_packing) {
             bit_packer(V_K, P_K, info_bits);
+            printf("array recovered : ");
+            print_array(P_K, info_bits);
+            printf("/n");
         }
 
 // MONITOR - error check

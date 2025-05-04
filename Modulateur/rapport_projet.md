@@ -27,7 +27,7 @@ We also verified that our gestion of random was correct. We have only one random
 
 **Testing**
 Because we rearranged the whole code, we chose to use an earlier simulation to compare the performances. We then tested the code with and without threads to compare the performances.  
-At first, we could see that the execution time with threads was higher than without threads. We reduced the number of threads and displayed the elapsed time after each SNR to see where the problem came from. We then saw that the time for only 1 function, not including threads, was bigger with threads compared to without threads ; that's how we noticed that our measuring method couldn't work with threads.  
+At first, we could see that the execution time with threads was higher than without threads. We reduced the number of threads and displayed the elapsed time after each SNR to see where the problem came from. We then saw that the time for only 1 function, not including threads, was bigger with threads compared to without threads ; that's how we noticed that our measuring method couldn't work with threads, causing us to switch time functions.  
 To test our random generators, we displayed the generated frames and could see that they were different. We also tested the channel randomizer, by using the all ones modulator and printing the noisy output. We could also see that they were different.
 *Source test*
 ![alt text](<random_source.jpg>)
@@ -38,7 +38,7 @@ To test our random generators, we displayed the generated frames and could see t
 We first tested if our decoding performances were still correct. As mentionned, because we changed the structure of the code, we used an earlier simulation as a comparison point. We could see that both without and with threads had the same decoding performances as before, meaning our code is still correct.
 ![correct](<FINAL GRAPHS/threads/error/hard.jpg>)
 
-We then compared the time spent for simulating one frame, as well as the throughput of one frame. Both went up for the thread version, although it is not 6 times faster, presumably because of the locks slowdown.
+We then compared the time spent for simulating one frame, as well as the throughput of one frame. The time went down and throughput increased for the thread version, although it is not exactly 6 times faster, presumably because of the locks slowdown.
 ![speed](thread_speed.jpg)
 ![throughput](thread_throughput.jpg)
 
@@ -143,3 +143,6 @@ We can see that this new monitor does not affect the performances, meaning it de
 
 The time taken for the monitor is (most of the time) also reduced, as we can see on this graph:
 ![monitor_perfs](monitor_upgrade.jpg)
+
+## Bit-packing
+Given that the simulation chain uses 1-bit data (other than in working with the noise of the channel), it is unnecessary to use a full byte for each piece of data. To reduce the 
