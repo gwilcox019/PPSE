@@ -14,6 +14,9 @@ void codec_repetition_hard_decode (const float* L_N, uint8_t* V_N, size_t k, siz
 
 void codec_repetition_soft_decode (const float* L_N, uint8_t *V_N, size_t k, size_t n_reps);
 
+// Bit packer
+void bit_packer (const uint8_t* V_N, uint8_t* P_N, size_t k);
+
 //Convert to fixed-point
 void quantizer_transform8 (const float* L_N, int8_t* L8_N, size_t N, size_t s, size_t f);
 

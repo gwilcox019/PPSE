@@ -22,6 +22,7 @@ void print_array_binary(void const * const ptr, size_t const size)
 void print_array (uint8_t* array, size_t size) {
     printf("[");
     for (int i=0; i<size; i++) {
+        if (i%8 == 0) printf("\n");
         printf("%d ; ", array[i]);
     }
     printf("]");
@@ -96,7 +97,7 @@ int main() {
     gsl_rng * rangen = gsl_rng_alloc (rangentype); // random number gen w uniform distr 
 
     size_t K = 32, N = 64, REPS = 2;
-    uint8_t UK[K], CN[N];
+    uint8_t UK[K], CN[N], PN[K];
     int32_t XN[N];
     float YN[N], LN[N];
     int8_t L8N[N];
@@ -128,7 +129,7 @@ int main() {
         module_bpsk_modulate_bit_unpack(CN, XN, N/8);
         printf("\nTableau module : \n");
         print_array_32(XN, N);
-        printf("\n__________\n");
+        printf("\n");
 
         // Modulated message
         //module_bpsk_modulate_neon(CN, XN, N);
@@ -156,9 +157,16 @@ int main() {
         // printf("\n");
 
         // printf("Tableau soft dec NORMAL: \n");
-        // codec_repetition_soft_decode(LN, VN, K, REPS);
-        // print_array(VN,K);
-        // printf("\n");
+         codec_repetition_soft_decode(LN, VN, K, REPS);
+         printf("tableau decode : \n");
+         print_array(VN,K);
+         printf("\n");
+
+
+        bit_packer(VN, PN, K/8);
+        printf("\nTableau repacked : ");
+         print_array(PN, K/8);
+        printf("\n__________\n");
 
         // printf("Tableau soft dec w SIMD: \n");
         // codec_repetition_soft_decode8_neon(L8N, VN, K, REPS);
