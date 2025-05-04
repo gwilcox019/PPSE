@@ -1,6 +1,24 @@
 #include "debug_func.h"
 
 // print functions for arrays of different types
+
+void print_array_binary(void const * const ptr, size_t const size)
+{
+    unsigned char *b = (unsigned char*) ptr;
+    unsigned char byte;
+    int i, j;
+    
+    printf("[ ");
+    for (i = 0; i < size; i++) {
+        for (j = 7; j >= 0; j--) {
+            byte = (b[i] >> j) & 1;
+            printf("%u ; ", byte);
+        }
+        printf("\n");
+    }
+    printf("]");
+}
+
 void print_array (uint8_t* array, size_t size) {
     printf("[");
     for (int i=0; i<size; i++) {
@@ -18,6 +36,7 @@ void print_array8 (int8_t* array, size_t size) {
 void print_array_32 (int32_t* array, size_t size) {
     printf("[");
     for (int i=0; i<size; i++) {
+        if (i%8 == 0) printf("\n");
         printf("%d ; ", array[i]);
     }
     printf("]");
@@ -77,7 +96,7 @@ int main() {
     gsl_rng * rangen = gsl_rng_alloc (rangentype); // random number gen w uniform distr 
 
     size_t K = 32, N = 64, REPS = 2;
-    uint8_t UK[N], CN[N];
+    uint8_t UK[K], CN[N];
     int32_t XN[N];
     float YN[N], LN[N];
     int8_t L8N[N];
@@ -87,27 +106,35 @@ int main() {
     {
         // float sigma=0;
         //  Generate message
-        source_generate(UK, K);
-        // printf("\nTableau genere : ");
-        // print_array(UK, K);
-        // printf("\n");
+        //source_generate(UK, K);
+        source_gen_bit_pack(UK,K/8);
+         printf("\nTableau genere : ");
+         print_array(UK, K/8);
+         printf("\nbinary : ");
+         print_array_binary(UK, K/8);
+         printf("\n");
 
         // Encoded message
-        encoder_repetition_encode(UK, CN, K, REPS);
-        // printf("\nTableau encode : ");
-        // print_array(CN, N);
+        //encoder_repetition_encode(UK, CN, K, REPS);
+        encoder_rep_encode_bit_pack(UK,CN,K/8,REPS);
+         printf("\nTableau encode : ");
+         print_array(CN, N/8);
+         printf("\nbinary : ");
+         print_array_binary(CN, N/8);
+         printf("\n");
 
         // Modulated message
-        module_bpsk_modulate(CN, XN, N);
+        //module_bpsk_modulate(CN, XN, N);
+        module_bpsk_modulate_bit_unpack(CN, XN, N/8);
         printf("\nTableau module : \n");
         print_array_32(XN, N);
         printf("\n__________\n");
 
         // Modulated message
-        module_bpsk_modulate_neon(CN, XN, N);
-        printf("\nTableau module neon : \n");
-        print_array_32(XN, N);
-        printf("\n__________\n");
+        //module_bpsk_modulate_neon(CN, XN, N);
+        //printf("\nTableau module neon : \n");
+        //print_array_32(XN, N);
+        //printf("\n__________\n");
 
         // Canal message
         channel_AGWN_add_noise(XN, YN, N, 0.1, rangen);

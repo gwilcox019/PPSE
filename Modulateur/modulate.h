@@ -11,6 +11,9 @@
 // read from C_N, write into X_N
 void module_bpsk_modulate (const uint8_t* CN, int32_t* XN, size_t n);
 
+// using bit packing
+void module_bpsk_modulate_bit_unpack (const uint8_t* CN, int32_t* XN, size_t n);
+
 // using SIMD
 void module_bpsk_modulate_neon (const uint8_t* CN, int32_t* XN, size_t n);
 

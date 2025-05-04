@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-Wall -std=gnu99 -O3 -march=native -I/opt/homebrew/opt/gsl/include -DENABLE_STATS
 # mac version
 LDFLAGS=-L/opt/homebrew/opt/gsl/lib -DENABLE_STATS
-LDLIBS=-lgsl -lgslcblas -lm -lpthread -lrt
+LDLIBS=-lgsl -lgslcblas -lm -lpthread #-lrt
 # jetson version
 #LDLIBS= -I/usr/include/gsl -lgsl -lgslcblas -lm
 
@@ -12,7 +12,7 @@ simulator: simulator.o generate.o encoder.o modulate.o decode.o monitor.o
 
 simulator.o: simulator.c debug_func.h generate.h encoder.h modulate.h decode.h monitor.h
 
-debug_func: debug_func.o generate.o encoder.o modulate.o decode.o monitor.o
+debug_func: debug_func.o generate.o encoder.o modulate.o decode.o 
 
 debug_func.o: debug_func.c debug_func.h
 
